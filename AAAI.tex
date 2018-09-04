@@ -1,0 +1,331 @@
+\def\year{2019}\relax
+%File: formatting-instruction.tex
+\documentclass[letterpaper]{article} %DO NOT CHANGE THIS
+\include{mypreamble}
+
+\usepackage{aaai19}  %Required
+\usepackage{times}  %Required
+\usepackage{helvet}  %Required
+\usepackage{courier}  %Required
+\usepackage{url}  %Required
+\usepackage{graphicx}  %Required
+\frenchspacing  %Required
+\setlength{\pdfpagewidth}{8.5in}  %Required
+\setlength{\pdfpageheight}{11in}  %Required
+
+%PDF Info Is Required:
+\pdfinfo{
+/Title (On Label Propagation on Hypergraphs via Wasserstein Barycenter)
+/Author (AAAI Press Staff)}
+\setcounter{secnumdepth}{0}  
+
+\begin{document}
+% The file aaai.sty is the style file for AAAI Press 
+% proceedings, working notes, and technical reports.
+\title{On Label Propagation on Hypergraphs via Wasserstein Barycenter}
+\author{AAAI Press\\
+Association for the Advancement of Artificial Intelligence\\
+2275 East Bayshore Road, Suite 160\\
+Palo Alto, California 94303\\
+}
+\maketitle
+
+\begin{abstract}
+Inspired by recent interests of developing machine learning and data mining algorithms on hypergraphs, we investigate in this paper the semi-supervised learning algorithm of propagating "soft labels" (e.g. probability distributions, class membership scores) over hypergraphs, by means of optimal transportation. Borrowing insights from Wasserstein propagation on graphs [Solomon et al. 2014], we re-formulate the label propagation procedure as message-passing algorithm, which renders itself naturally to a generalization applicable to hypergraphs through Wasserstein barycenters. Compared with Laplacian-based semi-supervised learning algorithms, the message-passing algorithm benefits from scalability and efficiency. Furthermore, in a PAC learning framework, we provide generalization error bounds for propagating one-dimensional distributions on graphs and hypergraphs using 2-Wasserstein distance, by establishing the \textit{algorithmic stability} of the proposed semi-supervised learning algorithm. These theoretical results also shed new lights upon deeper understandings of the Wasserstein propagation on graphs. We validate the efficacy of the proposed algorithm through a number of synthetic and real data experiments.
+\end{abstract}
+	
+\section{Introduction and Preliminaries}
+In the last few decades, we have seen a significant progress in semi-supervised learning which is a paradigm of learning algorithms in the presence of both labeled and unlabelled data. The main objective is to combine observed labels with the underlying manifold structure of dataset (e.g., the graph representation of dataset) to identify the labels for unlabelled data samples. We refer the interested readers to \cite{Seeger01learningwith} and \cite{Zhu06semi-supervisedlearning} for overviews of results. Given a dataset, it is a common practice to represent its manifold structure by a weighted graph $G=(V, E)$, where $V$ and $E$ correspond to data samples and their pairwise interactions, respectively. Let $f:V\to\D$ be an assignment of labels in an arbitrary set $\D$ to each vertex. Denote by $V_0\subset V$ the set of labelled vertices, that is $f(v)$ is known for all $v\in V_0$. The goal is to extend $f$ from $V_0$ to entire $V$. In the classical semi-supervised learning setup (e.g., see \cite{Zhu:SSL_Gaussian}) $\D$ is assumed to be a Euclidean space and hence the objective is formulated as minimizing the Dirichlet energy $\sum_{(u, v)\in E}(f(u)-f(v))^2$ over the space of functions $f$ satisfying the boundary condition on $V_0$. The labels are then given by a harmonic function satisfying $\Delta f=0$ on $V\backslash V_0$ for an appropriate positive definite Laplacian matrix $\Delta$.   
+
+In many settings, however, it is natural to model the labels as histograms or probability distributions rather than real or integer numbers; we shall refer to these more general labels as \textit{soft} labels. For instance, the traffic density at a given router in the Internet network or topic distributions in the co-authorship network are better modeled as probability distributions. Soft labels not only generalize the real-valued labels but also correspond to the more realistic setting in semi-supervised learning by incorporating the ``uncertainty'' of the observed labels. We model the assignment of soft labels to vertices as a distribution-valued map $V\to \D=\P(L)$ given by $v\mapsto \mu_v$ where $\P(L)$ is the set of all probability measure on the label class $L$ (which can be finite, countably or uncountably infinite). Among the first works addressing semi-supervised learning with soft labels are \cite{Distribution_Propagation1, Distribution_Propagation2, SSL_Measure_Propagation}.  In all these works, the loss function is the Kullback-Leibler (KL) divergence, which often fails to capture the interaction between histogram bins and the manifold structure of the dataset. To overcome this shortcoming, Solomon et al.\ \cite{Solomon:2014} introduced \textit{Wasserstein label propagation} whose objective is to minimize $\sum_{(u, v)\in E}W_2^2(\mu_u,\mu_v)$ over the space of distribution-valued maps satisfying a boundary condition characterized by the observed labels, where $W_2$ denotes the Wasserstein-2 distance (to be defined later). Even though defining harmonic maps for general metric spaces is a challenging task (see, e.g., \cite{Dirichlet_Wasserstein}), Solomon et al.\ \cite{Solomon:2014} related the above minimization to a Dirichlet problem when $L=\R$.\footnote{It is worth mentioning that Jost \cite{Jost} defined Dirichlet energy and  harmonic maps $f: \Omega\to \D$ when $\Omega$ and $\D$ are a compact Riemannian manifold and a metric space with negative Alexandrov curvature, respectively.  Formulating the semi-supervised learning with soft labels as minimizing the Dirichlet energy is therefore challenging, especially because the Wasserstein space, i.e.,  the metric space equipped with Wasserstein-2 distance, is positively curved in the sense of Alexandrov \cite [Section 7.3]{ambrosio2005gradient}. }
+
+The main advantages of Wasserstein distance over KL divergence in this context are as follows: 
+\begin{itemize}
+	\item Symmetry: Clearly, the objective of semi-supervised learning is symmetric in labels, hence the use of KL divergence is conceptually paradoxical. 
+	\item Existence: KL divergence requires a certain condition to exist (e.g., absolute continuity). For instance, KL divergence  between two Gaussian distributions involves the inverse of the covariance matrix and hence it cannot be computed when the covariance matrices are singular.
+	\item Stability: It is known that KL divergence is highly unstable, i.e., the optimal solution is highly sensitive to different realizations of data. However, Wasserstein distance is shown to be extremely stable rendering a very small variance of the optimal solution \cite{KLvsWass}. 
+	\item Discontinuity: 	Let the uncertainty of vertex $u$ be quantified by the entropy of probability measure $\mu_u$. It is natural to expect that the uncertainty of neighbouring vertices to be close. Since the entropy function is not continuous in KL divergence, it is possible to have labels $\mu$ and $\nu$ such that $D(\mu\|\nu)\leq \eps$ for small $\eps>0$ such that the uncertainties of $\mu$ and $\nu$ are arbitrarily far apart, even if both $\mu$ and $\nu$ are smooth. However, entropy is a continuous function in Wasserstein distance \cite{Yury_Wasserstein} and hence Wasserstein loss function guarantees that neighbouring vertices  have similar uncertainty.
+\end{itemize}
+
+In many real-world networks, one needs to describe a relation between multiple vertices simultaneously, as opposed to merely pairwise relations which are easily characterized by an edge in a simple graph. For instance, it is known that describing a paper as an entity containing a set of authors (which can be arbitrarily larger than two) reveals deeper information about the dynamic of co-authorship network (where each pair of authors is connected if they co-author in at least one paper). One way to describe such a phenomenon is to use \emph{hypergraphs} to represent these datasets. A hypergraph $\H=(V, \cE)$ consists of the vertex set $V$, and the set of \textit{hyperedges} $\cE$ which is a collection of subsets of $V$, i.e., $\cE\subseteq 2^V$.  As opposed to graphs, hypergraphs can capture the higher order interaction between vertices. Developing hypergraph-based learning algorithms has recently gained a tremendous attention in literature, e.g., \cite{Hypergraph_Clustering, Hypergraph_Jost, Hypergraph_Game, Hypergraph_Kannan, Hypergraph_Olgica, Hypergraph_TV, HypergraphScalable}.
+
+In this work, we extend the framework of \cite{Solomon:2014} to the hyperdgraph-based Wasserstein label propagation via multi-marginal optimal transport \cite{CE2010}. Our goal is to provide an efficient and theoretically sound approach to propagate probability measures $v\mapsto \mu_v$ on hypergraph $\H$ such that (i) $\mu_v$ coincide with the prescribed measures for $v\in V_0$ and (ii) all vertices within a hyperedge are assigned to "close" measures. To this goal, we reformulate Wasserstein label propagation \cite{Solomon:2014} as a message passing algorithm which renders  itself  naturally  to the hypergraph case via \textit{Wasserstein barycenter} \cite{Wasserstein_Barycenter, Hypergraph_Asoodeh}. As there is no general semi-supervised learning algorithm available for large dataset \cite{Label_Propa_100}, this new connection may be of computational importance and it is the subject of our ongoing research. We then 
+provide generalization error bounds \cite{Generalization_semi} for propagating one-dimensional distributions on graphs and hypergraphs by establishing the \textit{algorithmic stability} \cite{Algorithmic_Stability} of  the  proposed  semi-supervised  learning  algorithm. 
+
+
+The rest of the paper is structured as follows.  *****COMPLETE LATER******
+~\\
+~\\
+\section{Message Passing and Label Propagation on Graph and Hypergraph}
+In this section, we formulate our hypergraph label propagation as a special case of belief propagation. To this goal, we first briefly describe Wasserstein label propagation \cite{Solomon:2014} in the message passing perspective.
+
+
+A learning problem is specified by a probability distribution $p$ on $X\times Y$ according to which labeled sample pairs $z_i=\left( x_i,y_i \right)$ are drawn and presented to a learning algorithm. The soft label propagation problem amounts to setting $Y$ as a space of probability distributions and performs a regression problem for maps taking values in $Y$. Let 
+$Y$ be the simplex of probability distributions on a complete metric space $\left( N,d_N \right)$, i.e. $Y=\mathrm{Prob}\left( N \right)$. For $\my, \nu\in Y$, their Wasserstein-$2$ distance $W_2$ is given by 
+\begin{equation}
+  \label{eq:wasserstein-distance}
+  W_2 \left( \mu,\nu \right)\coloneqq\inf_{\pi\in\Pi \left( \mu,\nu \right)}\left[\iint_{N\times N}d^2_N \left( x,y \right)\,\mathrm{d}\pi \left( x,y \right)\right]^{\frac{1}{2}},
+\end{equation}
+and
+\begin{eqnarray}
+  \Pi \left( \mu,\nu \right)&\coloneqq &\big\{ \pi\in \mathrm{Prob}\left( N\times N \right) \mid \textrm{for all Borel sets $A$, $B$}, \nonumber\\
+  &&\pi \left( A\times N \right)=\mu \left( A \right),\pi \left( N\times B \right)=\nu \left( B \right)\,\big\}. \label{eq:coupling}
+\end{eqnarray}
+Equipped with Wasserstein distance, $Y$ is a complete metric space as long as the domain is complete \cite[Theorem 6.18]{villani2003topics} {\color{blue}[CHECK] I think their proof was for separable case}. 
+%If $X$ is equipped with a distance as well, the notion of Lipschitz maps from $X$ to $Y$ is well-defined. {|}
+\subsection{Wasserstein Label Propagation for Graph}
+Let $X$ be a graph $G= \left( V,E \right)$ where the vertices in $V$ are denoted as $\left[ n \right]=\left\{ 1,2,\cdots,n \right\}$, and edges in $E$ are denotes by tuples $\left( i,j \right)$ where $i,j\in V$. Wasserstein label propagation is an extension of Tikhonov regularization framework on graphs \cite{Belkin2004} from real-valued functions to measure-valued maps. 
+Denote a measure-valued map from $G$ to $\mathrm{Prob}\left( N \right)$ as $\mu:V\rightarrow\mathrm{Prob}\left( N \right)$. For simplicity, write $\mu_i:=\mu \left( i \right)$ for $i=1,\cdots,n$. A prototypical semi-supervised learning setting assumes $\mu_1,\cdots,\mu_m$ are known, where $1\leq m \ll n$, and the goal is to determine $\mu_{m+1},\cdots,\mu_n$ on the rest of the vertices. We will do so by minimizing the following objective function with Tikhonov regularization
+\begin{equation}
+  \label{eq:tikhonov}
+  \min_{f:V\rightarrow \mathrm{Prob}\left( N \right)}\frac{1}{m}\sum_{i=1}^m W^2_2 \left( \mu_i,f_i \right)+\gamma\sum_{\left( i,j \right)\in E}W^2_2 \left( f_i,f_j \right),
+\end{equation}
+where $\gamma>0$ is a regularization parameter.
+The minimizer of \eqref{eq:tikhonov} can be viewed as the measure-valued map ``learned'' from the training data $\left\{ \left( i,\mu_i \right)\mid 1\leq i\leq n \right\}$, along with the given graph structure $G= \left( V,E \right)$. 
+%The presence of the knowledge about $G$ is what distinguishes semi-supervised learning from supervised learning: the vertices $m+1,\cdots,n$ can be thought of as ``unlabelled data'' made available to a semi-supervised learner.
+
+\begin{remark}
+  Though it is conceivable that the Tikhonov regularization framework can be potentially extended to other Wasserstein spaces $W_p$ with $0\leq p\neq 2$, we'll restrict our attention to $W_2$ since this is the Wasserstein space equipped with a natural Riemannian structure \cite{Otto2001,AGS2008,LottVillani2009}.
+\end{remark}
+% Let $L$ be the set of possible labels. For instance, for binary classification $L=\{0,1\}$ and for regression $L=\R$. "Soft" labels are therefore given by a probability distribution over $L$. We denote by $\mathrm{Prob}(L)$ the simplex of probability measures on $L$.
+% Consider the minimization
+% Consider the following minimization: 
+% 	\begin{equation}
+% 	  \label{Def:Minimization}
+% 	  \min_{x\in \L^V}\sum_{C\in \C}f_C(x_C)
+% 	\end{equation}
+% where $V$ is the vertex set, $\C$ is the collection of subsets of $V$ and $f_C$ and $x_C$ correspond to functions and variables restricted to $C$.
+% This minimization subsumes many unsupervised and semi-supervised learning settings. For instance, if we consider all neighboring pair of vertices, i.e. all $C$ with $|C|=2$ corresponding to $(i, j)\in E$, then we have
+% 	\begin{equation}
+% 	  \label{Def:Minimization2}
+% 	  \min_{i\in \L^V}\sum_{i\in V}f_i(x_i) + \sum_{(i, j)\in E} f_{ij}(x_i, x_j)
+% 	\end{equation}
+% which is the classical formulation for SSL and/or metric labelling problem, see e.g., \cite{Image_Labeling}, where $f_i$ and $f_{ij}$ are called local \textit{unary} and 
+% \textit{pairwise} energy terms. 
+% The soft SSL appraoch in \cite{Solomon:2014} is also an special case of \eqref{Def:Minimization2} by choosing $x_i\in \P(L)$ for each $i\in V$, $f_i(x_i) = W(\mu_i, x_i)$ for $i\in V_0$ (the set of vertices with known labels) and $f_i(x_i)=0$ for $i\in V\backslash V_0$ and finally $f_{ij}(x_i, x_j) = W(x_i, x_j)$. 
+We now provide an algorithm for solving \eqref{eq:tikhonov} based on belief propagation framework. In this context, each vertex $i$ updates its \textit{belief} about the local minimizer of \eqref{eq:tikhonov} $f_i$ by exchanging messages to edges it is incident to. 
+The classical min-sum algorithm \cite{min_Sum} describes this process as follows. 
+%Representing the graph $G=(V, E)$ as a \textit{factor graph}, we can cast the soft label propagation described in last section as a message passing. Each $v\in V$ is a \textit{variable node} and each $e\in E$ is a \textit{factor node}.	
+%Denote the set of edges with direction distinguished by $\vec{E}=\{(i,j)\in V\times V:j\in N(i)\}$.
+At time $t$, vertex $i\in [m]$ has belief $b^{(t)}_i$ about the minimizer $f_i$ of \eqref{eq:tikhonov} and then at time $t+1$ sends message $J^{(t+1)}_{i\to e}$ to edge $e=(i, j)$ and receives message $J^{(t+1)}_{e\to i}$ from $e$ which evolve as
+% there are two messages on each edge $(i, e)\in E'$ in two different direction: $i\in V$ sends a message $J^{(t)}_{i\to e}:R\to R$ to $e=(i, j)\in E$ and receives a message $J^{(t)}_{e\to i}:R\to R$ from $e$:
+\begin{equation}\label{Eq:Update2}
+J^{(t)}_{i\to e} (b^{(t-1)}_i) = W_2(\mu_i, b^{(t-1)}_i) + \sum_{k\in N(i)\backslash \{j\}}J^{(t-1)}_{(i,k)\to i}(b^{(t-1)}_i)
+\end{equation}
+and 
+\begin{equation}\label{Eq:Update}
+    J^{(t)}_{e\to i}(b^{(t-1)}_i) =  \min_{f_j\in \mathrm{Prob}(N)}\Big[W_2(b^{(-1t)}_i, f_j) + J^{(t-1)}_{j\to e}(b^{(t-1)}_j)\Big].
+\end{equation}
+The first term in \eqref{Eq:Update2} is set to be zero if $i\notin [m]$. The belief is then updated at at time $t+1$ according to evolution
+$$b^{(t+1)}_i \coloneqq \argmin_{f_i} \left[W_2(\mu_i, f_i) + \sum_{k\in V: (i, k)\in E } J^{(t)}_{(i, k)\to i}(b^{(t)}_i)\right].$$
+% {\color{blue}Just remember that the idea of "factor graph" and bringing "factor nodes" in the simple graph case just makes everything messier! Because the above two equations can be easily combined as the following: 
+% \begin{equation}\label{Eq:Update}
+%     J^{(t)}_{j\to i}(x_i) =  \min_{x_j}\Big[f_i(x_j) + f_{ij}(x_i, x_j) + \sum_{v\in N(j)\backslash i}J^{(t-1)}_{v\to i}(x_j)\Big].
+% \end{equation}
+% }
+% keeps track of a \textit{message} from each neighbor $u\in N(i)$ where this message is denoted as $J^{(t)}_{i\to i}:R\to R$. These incoming messages are combined to compute new outgoing messages for each neighbor. The message $J^{(t+1)}_{i\to j}(\cdot)$ from vertex $i$ to vertex $j\in N(i)$ evolves according to
+% \begin{equation}\label{Eq:Update}
+%     J^{(t+1)}_{i\to j}(x_j) =  \min_{y_i}\Big[f_i(y_i) + f_{ij}(y_i, x_j) + \sum_{v\in N(i)\backslash j}J^{(t)}_{v\to i}(y_i)\Big].
+% \end{equation}
+%At each time $t$, the \textit{belief} of local minimizer $x^*_i$ is defined as 
+%$$b^{(t)}_i(x_i) = f_i(x_i) + \sum_{e\in E: (i, e)\in E'} J^{(t)}_{e\to i}(x_i).$$ 
+% If the true global minimizer $f^*$ is unique (for instance under the strict convexity assumption), then $|\argmin_{x_i} b_i^{(t)}(x_i)|=1$ for all $i$ and sufficiently large $t$. Therefore, we define an estimate of the minimizer $x^{(t)}_i$ for vertex node $i$ is then given by 
+% $$x_i^{(t)} = \argmin_{y_i} b^{(t)}_i(x_i).$$
+
+%$$x_i^{(t)} = \argmin_{y_i}f_i(y_i) +\sum_{v\in N(i)}J^{(t)}_{v\to i}(y_i).$$ 
+Convergence of $b_i^{(t)}$ to the true minimizer $f^*_i$ can be guaranteed under some (mild) conditions on initial beliefs if $G$ is a tree. 
+\subsection{Wasserstein Label Propagation for Hypergraph}
+Let now $X$ be represented by a hypergraph $H=(V, \mathcal E)$. Since each hyperedge may contain arbitrary number of vertices, the minimization \eqref{eq:tikhonov} fails to formulate our learning objective. Nevertheless, the belief propagation updates \eqref{Eq:Update2} and \eqref{Eq:Update} can naturally be extended to the message passing between vertex $i$ and hyperedge $E$ containing $i$ as 
+\begin{equation}\label{Eq:Update_H_2}
+J^{(t)}_{i\to E} (b_i^{(t)}) = W_2(\mu_i, b_i^{(t)}) + \sum_{E'\in \mathcal E\backslash\{E\}: i\in E'}J^{(t-1)}_{E'\to i}(b_i^{(t-1)})
+\end{equation}
+and 
+\begin{equation}\label{Eq:Update_H}
+    J^{(t)}_{E\to i}(b_i^{(t)}) =  \min_{f_{E\backslash \{i\}}}\Big[\mathsf{bary}(E) + \sum_{k\in E\backslash \{i\}}J^{(t-1)}_{k\to E}(b_k^{(t-1)})\Big].
+\end{equation}
+where $f_{E\backslash \{i\}}=\{f_k\in\mathrm{Prob}(N): k\in E\backslash\{i\}\}$.
+
+
+
+
+
+
+
+We construct the factor graph $(V\cup \mathcal E, E')$ corresponding to $H$. Unlike the simple graph case, each factor node (i.e., hyperedge) $E$ has degree larger than 2. The messages over factor graph evolve as the following:
+
+$$J^{(t)}_{i\to E} (x_i) = f_i(x_i) + \sum_{\hat E\in \mathcal E\backslash\{E\}: i\in \hat E}J^{(t-1)}_{\hat E\to i}(x_i)$$
+and 
+\begin{equation}\label{Eq:Update}
+    J^{(t)}_{E\to i}(x_i) =  \min_{x_{E\backslash \{i\}}}\Big[\mathsf{bary}(E) + \sum_{k\in E\backslash \{i\}}J^{(t-1)}_{k\to E}(x_k)\Big].
+\end{equation}
+In above, we use $x_{E\backslash \{i\}}$ to denote the set of probability measures corresponding to vertices in $E$ expect for vertex $i$ whose probability measure is fixed $x_i$.
+
+This belief propagation update rules justify the following formulation for Wasserstein semi-supervised learning for hypergraph as follows:
+
+$$\min_{x\in \L^V} \sum_{i\in V_0} f_i(x_i) + \sum_{E\in \mathcal E} \mathsf{bary}(E)$$
+which is a natural generalization of \eqref{Def:Minimization2}.
+
+
+
+
+	
+
+
+
+
+\section{Experiments}
+In this section we try out our soft label propagation approach to three datasets represented as hypergraphs. Two of the datasets, Mushroom and congressional voting record, are from the UCI machine learning repository, and the last one is 
+\subsection{Mushroom}
+\textcolor{blue}{I summarize the results here, and I am going to expand it later.}
+$1000$ edible and $1000$ poisonous mushrooms; 
+$92$ hyperedges;
+$20$ labeled examples from each category, so $2\%$ labeled data;
+$2$-dimensional Gaussian distribution; edible $\mathsf{Norm}\paren{(1, 0), 0.05I_2}$, poisonous $\mathsf{Norm}\paren{(0, 1), 0.05I_2}$; average error rate on $20$ runs with is $8.8\%$.
+$1$-dimensional Gaussian distribution; edible $\mathsf{Norm}\paren{-1, 0.01}$, poisonous $\mathsf{Norm}\paren{1, 0.01}$; average error rate on $20$ runs with is $10.3\%$.
+
+
+\subsection{Congressional Voting Record}
+\textcolor{blue}{I summarize the results here, and I am going to expand it later.}
+$431$ congressional men and women. $7$ issues, $14$ hyperedges;
+$10$ labeled examples from each party, so $4.64\%$ labeled data;
+$2$-dimensional Gaussian distribution; democrat $\mathsf{Norm}\paren{(1, 0), 0.05I_2}$, republican $\mathsf{Norm}\paren{(0, 1), 0.05I_2}$; average error rate on $20$ runs with is $11.0\%$.
+$1$-dimensional Gaussian distribution; democrat $\mathsf{Norm}\paren{-1, 0.01}$, republican $\mathsf{Norm}\paren{1, 0.01}$; average error rate on $20$ runs with is $10.9\%$.
+
+\subsection{Web of Science 2015 AI Papers}
+
+% \section{Wasserstein Distances and Barycenters}\label{eq:wass-dist}
+	
+% Given two probability distributions $\mu$ and $\nu$ on the same metric space $\left(L,d\right)$, the \emph{Wasserstein-$p$ distance} between $\mu$ and $\nu$ is defined as
+% \begin{equation}
+%     \label{eq:wass-dist-defn}
+% 	W_p\left(\mu, \nu\right):= \left[\inf_{\pi\in\Pi\left(\mu,\nu\right)}\int_{L\times L}d^p\left(x,y\right)\,\mathrm{d}\pi\left(x,y\right)\right]^{1/p}
+% \end{equation}
+% where $\Pi\left(\mu,\nu\right)$ is the (convex) set of all probabilistic couplings between $\mu$ and $\nu$, i.e.
+% \begin{equation*}
+% 	\Pi\left(\mu,\nu\right):=\left\{\pi\in\mathcal{P}\left(L\times L\right)\mid \mathrm{proj}_1^{\#}\pi = \mu, \mathrm{proj}_2^{\#}\pi = \nu\right\},
+% \end{equation*}
+% where $\mathrm{proj}_j^{\#}\pi$ denotes the pushforward of $\pi$ under $j$th component projection mapping for $j=1,2$.   If $\mu$ and $\nu$ are absolutely continuous measures, then the optimizing coupling $\pi^*$ in \eqref{eq:wass-dist-defn} is unique \cite[Chapter 2]{villani2003topics}. Moreover, for any $t\in [0,1]$ there exists a unique probability measure $[\mu, \nu]_t$ given by $t\mapsto ((1-t)\mathrm{proj}_1 + t\mathrm{proj}_2)^\#\pi^*$  that constitutes the geodesic from $\mu$ to $\nu$ (where the metric structure is given by Wasserstein distance). Probabilistically, if $(X,Y)$ is an optimal coupling of $(\mu, \nu)$ then $[\mu, \nu]_t$ is the law of the interpolated random variable $(1-t)X + t Y$. This notion of interpolation (known as \textit{displacement interpolation}) was the main motivation for graph-based soft semi-supervised learning in \cite{Solomon:2014}. Notice that if the observed labels $\mu_v$ for $v\in V_0$ have very small variance (i.e, concentrated around their means), it is expected that the desired learning algorithm should output labels $\mu_v$ for $v\in V$ that have small variances as well \cite{Zhu:SSL_Gaussian}. The linear interpolation (i.e., $(1-t)\mu + t\nu$) clearly fails to satisfy this property as it constructs a bimodal distributions. However, the displacement interpolation is shown to possess this property. For instance, if $\mu=\N(m_1, \sigma^2_1)$ and $\mu=\N(m_2, \sigma^2_2)$ then their displacement interpolation is $N(m_t, \sigma_t^2)$ where $m_t=(1-t)m_1+tm_2$ and $\sigma_t^2= (1-t)\sigma_1^2 + t\sigma_2^2$ (see Fig~\ref{fig:gaussian}).
+% \begin{figure}
+% 	\centering
+% 	\includegraphics[width=1\linewidth]{Gaussian}
+% 	\caption{Given two Gaussian probability measures $\N(0, 1)$ and $\N(10, 4)$, their displacement interpolation is $\N(10t, 1+3t)$ for any $t\in [0,1]$. The middle curve corresponds to the interpolation for $t=\frac{1}{2}$.}
+% 	\label{fig:gaussian}
+% \end{figure}
+
+	
+% It is known that \eqref{eq:wass-dist-defn} is a distance metric for two probability measures. In order to come up with a loss function for hypergraphs, one needs to define a measure of closeness among several probability measures. To this goal, we resort to Wasserstein barycenter \cite{Wasserstein_Barycenter}. The Wasserstein barycenter of $n$ probability measures $\mu_1,\cdots,\mu_n$ is defined as
+% \begin{equation}
+%     \label{eq:wass-barycenter}
+% 	\mathsf{B}(\mu_1, \dots, \mu_n)\coloneqq \argmin_{\mu\in\mathcal{P}\left(L\right)}\sum_{i=1}^{n}\lambda_iW_p\left(\mu,\mu_i\right),
+% \end{equation}
+% where $\Lambda=(\lambda_1, \dots, \lambda_n)$ is a probability vector. It was established in \cite{CE2010} that, for $p=1$, the optimization problem \eqref{eq:wass-barycenter} is equivalent to the multi-marginal optimal transport problem
+% \begin{equation*}
+% 	\label{eq:mult-marginal-ot}
+% 	\argmin_{\mu\in\Pi\left(\mu_1,\cdots,\mu_n\right)}\int_{L\times\cdots\times L}c\left(\xi_1,\cdots,\xi_n\right)\,\mathrm{d}\pi\left(\xi_1,\cdots,\xi_n\right)
+% \end{equation*}
+% where
+% \begin{equation*}
+% 	c\left(\xi_1,\cdots,\xi_n\right) = \inf_{x\in L}\sum_{i=1}^nd\left(\xi_i,x\right)
+% \end{equation*}
+% and $\Pi\left(\mu_1,\cdots,\mu_n\right)$ is the (convex) subset of probability distribution on $L\times\cdots\times L$ ($n$-copy Cartesian product) with marginal distribution $\mu_i$ on the $i$-th Cartesian component. This in turn demonstrates that \eqref{eq:wass-barycenter} is a linear program. The existence and uniqueness of Wasserstein barycenter is studied in \cite{Wasserstein_Barycenter}. In particular, it is shown that if $\mu_i=\N(m_i, \Sigma^2_i)$ for $i\in[n]\coloneqq \{1, \dots, n\}$ and if at least one of $\Sigma_i$ is full rank, then $\mathsf{B}(\mu_1, \dots, \mu_n) $ exists and is unique and equals $\N(m, \Sigma)$, where $m=\sum_i\lambda_im_i$ and $\Sigma$ is the unique solution of the fixed point equation $\Sigma = \sum_i\lambda_i(\Sigma^{1/2}\Sigma_i\Sigma^{1/2})^{1/2}$.  As indicated in \cite{Wasserstein_Barycenter}, Wasserstein barycenter extends displacement interpolation, allowing one to interpolate between several probability measures in a canonical way. Similar to \cite{Solomon:2014}, we motivate the use of Wasserstein barycenter as the loss function using the property of desired soft semi-supervised learning mentioned in \cite{Zhu:SSL_Gaussian}. It is shown in \cite[Theorem 3.6]{Barycenter_Variance} that 
+% \begin{equation*}
+%     \sum_{i=1}^{n}\lambda_iW_2\left(\mathsf{B}(\mu_1, \dots, \mu_n),\mu_i\right)\leq \sum_{i=1}^n\lambda_i \mathsf{var}(\mu_i),
+% \end{equation*}
+% where $\mathsf{var}(\cdot)$ denotes the variance of a given probability measure. Hence, if the variance of each $\mu_i$ are small, then their barycenter is concentrated within an intersection of small neighbourhoods around $\mu_i$.  
+	
+	
+% \section{Hypergraph Label Propagation} \label{Sec:Label_propagat}
+% Consider  a hypergraph $\H=(V, \cE)$ where $V=[n]$ and $\cE\subset 2^V$. Suppose we are given the soft labels $\mu_i\in \P(L)$ for a subset of vertices $i\in V_0$. For the ease of presentation, we assume $V_0=[k]$. The objective is to extend the labels to $\nu_1, \dots, \nu_n$ for all vertices in $V$ such that $\nu_i=\mu_i$ for all $i\in [k]$ and $\nu_i$ and $\nu_j$ are very "close" (in Wasserstein distance) if there exists $E\in \cE$ such that $i\in E$ and $j\in E$. For each $E\in \cE$, let $\mathsf{B}(E)$ be its \textit{centre of gravity} given by $\mathsf{B}(E)\coloneqq \mathsf{B}(\{\nu_j, j\in E\})$ where the $\lambda_i=\frac{1}{|E|}$. The goal is therefore written as 
+% \begin{equation}
+% 	\label{eq:wass-label-prop}
+% 	\min_{\nu_1, \dots, \nu_n\in \P(L) \atop \nu_i=\mu_i, i\in [k]}\sum_{i=1}^m\eta_j\sum_{i\in E_j}W_2(\mathsf{B}(E_j), \nu_i),
+% \end{equation}
+% where $\eta_j$ is the weight of the $j$th hyperedge $E_j$(say $\frac{1}{|E_j|-1}$) and $m=|\cE|$. Clearly, the hard constraints $\nu_i=\mu_i$ for  $i\in [k]$ causes robustness issues. To avoid them, we propose the following objective function 
+% \begin{equation}\label{eq:wass-label-prop-soft}
+% 	\min_{\nu_1, \dots, \nu_n\in \P(L) }\sum_{i=1}^kW_2\left(\nu_i,\mu_i\right)+\sum_{j=1}^{m}\eta_j\sum_{i\in E_j}W_2(\mathsf{B}(E_j), \nu_i),
+% \end{equation}    
+% that is, the prescribed labels are to be reassigned "softly" through regularization rather than being hard-set. Given the definition of the centre of gravity, we can equivalently write the above optimization problem as follows: 
+% \begin{equation}
+% 	\label{eq:wass-label-prop-soft2}
+%     \min_{\nu_1, \dots, \nu_n\in \P(L)}\min_{\zeta_1, \dots, \zeta_m\in \P(L)} \sum_{i=1}^kW_2\left(\nu_i,\mu_i\right)+\sum_{j=1}^{m}\eta_j\sum_{i\in E_j}W_2(\zeta_j, \nu_i).
+% \end{equation}
+% This double minimization allows us to apply the process of alternating minimization (aka Blahut-Arimoto algorithm \cite{Cover:2006}) to obtain the optimal labels $\nu_1, \dots, \nu_n$ which is described in sequel.
+	
+
+	
+	
+% %	
+% %	{\color{red} POTENTIAL BULLSHIT: It seems to me that what matters is the number of labelled measures neighbors to each unlabelled measure, i.e., 
+% %		$$\nu_j = \mathsf{Bary}[\{\mu_r: \exists E\in \cE: r\in E, j\in E\}].$$ 
+% %		The vertices whose neighbors are not labelled can be trivially assigned!!
+% %		If this is not optimal, at least, this is the easiest assignment.
+% %	}
+
+% \subsection{Why not?}
+% Address the computational cost? Dual formulation? Maybe use sink-horn or entropy regularization to speed up the distance calculation?  
+	
+% ******NEEDS TO BE COMPLETED****** 
+	
+	
+% \section{Algorithm}\label{sec:algorithm}
+% We propose to solve the optimization problem \eqref{eq:wass-label-prop-soft2} using an alternating minimization strategy. This amounts to two interleaved Wasserstein barycenter calculation.
+	
+% \emph{Step 0.} Initialize $\nu_i=\mu_i$ for $1\leq i\leq k$, and let $\nu_i$ be uniform distributions for all $k+1\leq i\leq n$.
+	
+% \emph{Step 1.} For fixed $\nu_1,\cdots,\nu_n$, compute $\mathsf{B}(E_1),\cdots,\mathsf{B}(E_m)$ for each of the $m$ hyperedges by
+% \begin{equation}
+% 	\label{eq:subproblem-barycenter}
+% 	\mathsf{B}(E_j):=\frac{1}{|E_j|}\argmin_{\nu\in\mathcal{P}\left(L\right)}\sum_{i\in E_j}W_2\left(\nu, \nu_i\right).
+% \end{equation}
+	
+% \emph{Step 2.} For fixed $\mathsf{B}(E_1),\cdots,\mathsf{B}(E_m)$, compute $\nu_1,\cdots,\nu_n$ for each of the $n$ vertices by  {\color{red}I think Step 3 needs to be edited. I wrote the objective as \eqref{eq:wass-label-prop} and changed it to \eqref{eq:wass-label-prop-soft} to make it look like previous works. If you don't agree with this way, let me know which one you like to keep, \eqref{eq:wass-label-prop} or \eqref{eq:wass-label-prop-soft}? }
+% \begin{equation}
+% 	\label{eq:subproblem-labels}
+% 	\nu_i:=\argmin_{\nu\in\mathcal{P}\left(L\right)}\sum_{j:E_j\ni i}\eta_j W_2\left(\nu_j^b, \nu\right)
+% \end{equation}
+% and then set
+% \begin{equation*}
+% 	\nu_i=\mu_i\quad\textrm{for all $1\leq i\leq k$}.
+% \end{equation*}
+	
+% \emph{Step 3.} Repeat Step 1-2 until convergence, or until a predetermined number of iterations is reached.
+	
+% %	{\color{blue} @Yi: This is really just a preliminary version of the algorithm. I think this version might need some tweaking to be made to work --- maybe by a change of the iteration order (e.g. randomly initializing the barycenters first), or using dynamically adaptive weights, or it might only work for particular Wasserstein distances ($p=1$ or $p=2$?), or the barycenter application should be replaced with a version with entropy regularization... I think it really depends on experiments!}
+% %	
+% %	{\color{red} @Tingran: When we assume the probabilities are supported on the classes, I use the python optimal transport (ot) package, and the barycenter and Wasserstein distances are in $W_1$ and entropy regularized ($\text{reg}=0.01$), but in the case of Gaussian, the closed form in literature is in $W_2$, if I understood it correctly. The code I have now initializes vertex probabilities randomly, but it is not a big deal that I do the other way around. I don't quite understand what do you mean by ``dynamically adaptive weights'', so would you please offer more details about it?}
+% %	
+% %	{\color{blue} Of course! I was thinking about updating the weights $\eta_j$ during the iteration as well, for instance, one can set $\eta_j$ to be proportional to the weighted degree of the hyperedge. But it is probably tricky to get it right in implementation (the update rule will be crucial for convergence), so we don't have to do it right now --- it was just an idea that ran across my mind.}
+% %	
+
+
+% \subsection{Convergence:}
+% If all known labels have the same variances, then the variance of each unknown labels converge to that of known ones. *******[Needs proof]********* 
+
+% \section{Linear Hypergraphs}
+% Suppose that $H$ is a \textit{linear} hypergraph, that is every two hyperedges of $H$ have at most one vertex in common and each vertex is contained in at most two hyperedges. Suppose also that from each hyperedge, we observe the label of exactly one vertex, thus $k=m$. 
+	
+% Recall that we assume that the labels $\{\mu_i\}_{i=1}^k$ are given for the vertices $i\in\{k\}$ and the objective is to derive the appropriate labels for vertices $j\in \{k+1, \dots, n\}$. In first case, we assume that the labels are given for all vertices of degree two. Consider the hyperedge $E$ with $r$ vertices of degree two with labels, say, $\mu_1, \dots, \mu_r$. It is clear that the optimal labels for the rest of vertices in $E$ are $\mathsf{B}(\mu_1, \dots, \mu_r)$. The more interesting case is when the degree of all labelled vertices are one. Let $\Xi(E)\coloneqq -|E| + \sum_{i\in E}d_i$. In fact, $\Xi(E)$ specifies the number of hyperedges that are incident to $E$, this it may be well called the \textit{conductivity} of $E$. We shall show that with the above assumption, the optimal labels are obtain via the following simple rules [Needs to be verified]:
+% \begin{itemize}
+% 	\item $\nu_i = \mu_r$ if $d(i)=1$ and $(i, r)\in E$ for some $E\in \cE$ and $r\in [k]$
+% 	\item $\nu_i = \mu_r$ if $d(i)=2$ and $(i, j)\in E_1$ and $(i, r)\in E_2$ with $\Xi(E_2)>\Xi(E_1)$ for some $j\in [k]$
+% 	\item $\nu_i = [\mu_r, \mu_j]_t$ if $d(i)=2$ and $(i, j)\in E_1$ and $(i, r)\in E_2$ with $\Xi(E_2) = \Xi(E_1)$ for some $r, j\in [k]$ and $t\in [0,1]$.   
+% \end{itemize}
+% *****NEEDS TO BE COMPLETED******
+	
+	
+
+	
+
+	
+% \section{Experiments}
+% \subsection{Binary classification}
+% \subsection{Regression}
+
+	
+	
+	
+\bibliography{bibliography}
+  \bibliographystyle{aaai}	
+
+\end{document}
+

@@ -1,0 +1,139 @@
+\include{mypreamble}
+
+\title{\LARGE \bf
+	On Label Propagation on Hypergraphs via Wasserstein Barycenter
+	%Barycentric Curvature of Hypergraphs: Theoretical Foundations 
+}
+
+
+\begin{document}
+\maketitle
+%\thispagestyle{empty}
+%\pagestyle{empty}
+	
+\begin{abstract}
+Inspired by recent interests of developing machine learning and data mining algorithms on hypergraphs, we investigate in this paper the semi-supervised learning algorithm of propagating "soft labels" (e.g. probability distributions, class membership scores) over hypergraphs, by means of optimal transportation. Borrowing insights from Wasserstein propagation on graphs [Solomon et al. 2014], we re-formulate the label propagation procedure as message-passing algorithm, which renders itself naturally to a generalization applicable to hypergraphs through Wasserstein barycenters. Compared with Laplacian-based semi-supervised learning algorithms, the message-passing algorithm benefits from scalability and efficiency. Furthermore, in a PAC learning framework, we provide generalization error bounds for propagating one-dimensional distributions on graphs and hypergraphs using 2-Wasserstein distance, by establishing the \textit{algorithmic stability} of the proposed semi-supervised learning algorithm. These theoretical results also shed new lights upon deeper understandings of the Wasserstein propagation on graphs. We validate the efficacy of the proposed algorithm through a number of synthetic and real data experiments.
+\end{abstract}
+\section{introduction}
+During the last few decades, we have seen a significant progress in graph-based semi-supervised learning
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Soft Hypergraph SSL}
+\label{Sec:Solomon}
+In this section, we revisit the label propagation over hypergraph proposed by Solomon et al.\ \cite{Solomon:2014}.
+
+
+\section{SSL as Belief Propagation}
+	Let the label set be $\L$. In the soft SSL case, the label set is the simplex of probability measures on an arbitrary set $L$, i.e., $\L=\P(L)$. 
+	
+	
+	Consider the following minimization: 
+	\begin{equation}
+	  \label{Def:Minimization}
+	  \min_{x\in \L^V}\sum_{C\in \C}f_C(x_C)
+	\end{equation}
+where $V$ is the vertex set, $\C$ is the collection of subsets of $V$ and $f_C$ and $x_C$ correspond to functions and variables restricted to $C$.
+This minimization subsumes many unsupervised and semi-supervised learning settings. For instance, if we consider all neighboring pair of vertices, i.e. all $C$ with $|C|=2$ corresponding to $(i, j)\in E$, then we have 
+	\begin{equation}
+	  \label{Def:Minimization2}
+	  \min_{i\in \L^V}\sum_{i\in V}f_i(x_i) + \sum_{(i, j)\in E} f_{ij}(x_i, x_j)
+	\end{equation}
+which is the classical formulation for SSL and/or metric labelling problem, see e.g., \cite{Image_Labeling}, where $f_i$ and $f_{ij}$ are called local \textit{unary} and 
+\textit{pairwise} energy terms. 
+The soft SSL appraoch in \cite{Solomon:2014} is also an special case of \eqref{Def:Minimization2} by choosing $x_i\in \P(L)$ for each $i\in V$, $f_i(x_i) = W(\mu_i, x_i)$ for $i\in V_0$ (the set of vertices with known labels) and $f_i(x_i)=0$ for $i\in V\backslash V_0$ and finally $f_{ij}(x_i, x_j) = W(x_i, x_j)$. 
+We now provide a algorithm for solving \eqref{Def:Minimization} based on message passing. 
+	
+	
+
+First we construct the \textit{factor graph} $F=(V', E')$ corresponding to graph $G=(V, E)$, i.e., $F$ is bipartite graph with vertex set $V'=V\cup E$ and $v\in V$ is connected to $e\in E$ if $v$ is incident to $e$. 
+
+%Representing the graph $G=(V, E)$ as a \textit{factor graph}, we can cast the soft label propagation described in last section as a message passing. Each $v\in V$ is a \textit{variable node} and each $e\in E$ is a \textit{factor node}.	
+%Denote the set of edges with direction distinguished by $\vec{E}=\{(i,j)\in V\times V:j\in N(i)\}$.
+At time $t$, there are two messages on each edge $(i, e)\in E'$ in two different direction: $i\in V$ sends a message $J^{(t)}_{i\to e}:R\to R$ to $e=(i, j)\in E$ and receives a message $J^{(t)}_{e\to i}:R\to R$ from $e$:
+$$J^{(t)}_{i\to (i,j)} (x_i) = f_i(x_i) + \sum_{k\in N(i)\backslash \{j\}}J^{(t-1)}_{(i,k)\to i}(x_i)$$
+and 
+\begin{equation}\label{Eq:Update}
+    J^{(t)}_{(i,j)\to i}(x_i) =  \min_{x_j}\Big[f_{ij}(x_i, x_j) + J^{(t-1)}_{j\to (i, j)}(x_j)\Big].
+\end{equation}
+
+
+{\color{blue}Just remember that the idea of "factor graph" and bringing "factor nodes" in the simple graph case just makes everything messier! Because the above two equations can be easily combined as the following: 
+\begin{equation}\label{Eq:Update}
+    J^{(t)}_{j\to i}(x_i) =  \min_{x_j}\Big[f_i(x_j) + f_{ij}(x_i, x_j) + \sum_{v\in N(j)\backslash i}J^{(t-1)}_{v\to i}(x_j)\Big].
+\end{equation}
+}
+
+
+% keeps track of a \textit{message} from each neighbor $u\in N(i)$ where this message is denoted as $J^{(t)}_{i\to i}:R\to R$. These incoming messages are combined to compute new outgoing messages for each neighbor. The message $J^{(t+1)}_{i\to j}(\cdot)$ from vertex $i$ to vertex $j\in N(i)$ evolves according to
+% \begin{equation}\label{Eq:Update}
+%     J^{(t+1)}_{i\to j}(x_j) =  \min_{y_i}\Big[f_i(y_i) + f_{ij}(y_i, x_j) + \sum_{v\in N(i)\backslash j}J^{(t)}_{v\to i}(y_i)\Big].
+% \end{equation}
+
+
+At each time $t$, the \textit{belief} of local minimizer $x^*_i$ is defined as 
+$$b^{(t)}_i(x_i) = f_i(x_i) + \sum_{e\in E: (i, e)\in E'} J^{(t)}_{e\to i}(x_i).$$ If the true global minimizer $x^*$ is unique (for instance under the strict convexity assumption), then $|\argmin_{x_i} b_i^{(t)}(x_i)|=1$ for all $i$ and sufficiently large $t$. Therefore, we define an estimate of the minimizer $x^{(t)}_i$ for vertex node $i$ is then given by 
+$$x_i^{(t)} = \argmin_{y_i} b^{(t)}_i(x_i).$$
+
+%$$x_i^{(t)} = \argmin_{y_i}f_i(y_i) +\sum_{v\in N(i)}J^{(t)}_{v\to i}(y_i).$$ 
+
+Convergence is guaranteed under some (mild) conditions on initial $J$ and also $f_i$ and $f_{ij}$. 
+
+
+
+
+
+
+\subsection{Hypergraph}
+
+
+
+
+
+Let hypergraph $H=(V, \mathcal E)$ be given. We construct the factor graph $(V\cup \mathcal E, E')$ corresponding to $H$. Unlike the simple graph case, each factor node (i.e., hyperedge) $E$ has degree larger than 2. The messages over factor graph evolve as the following:
+
+$$J^{(t)}_{i\to E} (x_i) = f_i(x_i) + \sum_{\hat E\in \mathcal E\backslash\{E\}: i\in \hat E}J^{(t-1)}_{\hat E\to i}(x_i)$$
+and 
+\begin{equation}\label{Eq:Update}
+    J^{(t)}_{E\to i}(x_i) =  \min_{x_{E\backslash \{i\}}}\Big[\mathsf{bary}(E) + \sum_{k\in E\backslash \{i\}}J^{(t-1)}_{k\to E}(x_k)\Big].
+\end{equation}
+In above, we use $x_{E\backslash \{i\}}$ to denote the set of probability measures corresponding to vertices in $E$ expect for vertex $i$ whose probability measure is fixed $x_i$.
+
+This belief propagation update rules justify the following formulation for Wasserstein semi-supervised learning for hypergraph as follows:
+
+$$\min_{x\in \L^V} \sum_{i\in V_0} f_i(x_i) + \sum_{E\in \mathcal E} \mathsf{bary}(E)$$
+which is a natural generalization of \eqref{Def:Minimization2}.
+
+\subsection{Phase Transition}
+
+~\\
+~\\
+
+\subsection{Initial Messages}
+~\\
+~\\
+
+\subsection{Diagonal dominance and convergence}
+~\\
+~\\
+\bibliographystyle{IEEEtran}
+\bibliography{bibliography}
+	
+\end{document}
+

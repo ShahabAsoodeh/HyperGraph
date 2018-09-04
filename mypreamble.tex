@@ -1,0 +1,196 @@
+%\newcommand{\CLASSINPUTbaselinestretch}{1.2}
+%\documentclass[conference,twocolumn]{IEEEtran}
+%\documentclass[letterpaper,10 pt,conference]{ieeeconf} 
+%\documentclass[10pt, onecolumn]{IEEEtran}
+%\documentclass[10pt,letterpaper]{article}
+%\IEEEoverridecommandlockouts    
+% \overrideIEEEmargins
+
+
+%\usepackage[left=1in,top=1in,right=1in,bottom=1in]{geometry}
+
+
+\usepackage{geometry}
+\geometry{
+a4paper,
+total={210mm,297mm},
+left=17.1mm,
+right=17.1mm,
+top=19.1mm,
+bottom=17.1mm,
+}
+
+
+\usepackage[english]{babel}
+\usepackage{enumitem, hyperref}
+\usepackage[latin1]{inputenc}
+\usepackage{enumerate}
+%\usepackage{enumitem}
+%\setlist[enumerate]{label=\roman*}  %% for all enumerate environments
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[T1]{fontenc}
+\usepackage{subfigure}
+%\usepackage{subcaption}
+\usepackage{dsfont}
+\usepackage{amsfonts}
+\usepackage{graphicx,wrapfig}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{mathtools, cuted}
+\usepackage{amsthm}
+\usepackage{amstext}
+\usepackage{amssymb}
+\usepackage{mathrsfs}
+\usepackage{cite}
+\usepackage{mathtools}
+\usepackage{tikz}
+\usepackage{marginnote}
+\usepackage{tkz-tab}
+\usetikzlibrary{topaths,calc}
+%*****Margin Note
+\usepackage{stackengine}
+
+%**********
+
+\newcommand{\appsec}{
+	\renewcommand{\thesubsection}{\Alph{subsection}}
+}
+\def\R{\mathbb{R}}
+\def\cE{\mathcal{E}}
+\def\fin{{<\infty}}
+\def\supp{\mathop{\rm supp}}
+\def\Gr{\mathop{\rm Gr}}
+\def\cl{\mathop{\rm cl}}
+\def\Proj{\mathop{\rm Proj}}
+\def\argmax{\mathop{\rm arg\, max}}
+\def\argmin{\mathop{\rm arg\, min}}
+\def\eps{\varepsilon}
+\def\hX{\hat{X}}
+\def\hY{\hat{Y}}
+\def\hx{\hat{x}}
+\def\hf{\hat{f}}
+\def\A{{\mathcal A}}
+\def\B{{\mathcal B}}
+\def\D{{\mathcal D}}
+\def\F{{\mathcal F}}
+\def\H{{\mathcal H}}
+\def\I{{\mathcal I}}
+\def\G{{\mathcal G}}
+\def\C{{\mathcal C}}
+\def\P{{\mathcal P}}
+\def\Q{{\mathcal Q}}
+\def\T{{\mathcal T}}
+\def\X{{\mathcal X}}
+\def\Y{{\mathcal Y}}
+\def\M{{\mathcal M}}
+\def\N{{\mathcal N}}
+\def\S{{\mathcal S}}
+\def\L{{\mathcal L}}
+\def\cR{{\mathcal R}}
+\def\Z{{\mathcal Z}}
+\def\U{{\mathcal U}}
+\def\V{{\mathcal V}}
+%\newcommand{\indep}{\perp\!\!\!\perp}
+\def\indep{{\perp\!\!\!\perp}}
+\def\sgr{{\mathsf{gr}}}
+\def\spr{{\mathsf{pr}}}
+\def\sPr{{\mathsf{Pr}}}
+\def\sUnif{{\mathsf{Unif}}}
+\def\sBer{{\mathsf{Bernoulli}}}
+\def\sP  {{\mathsf{P}}}
+\def\sp{{\mathsf p}}
+\def\sq{{\mathsf q}}
+\def\sX{{\mathsf X}}
+\def\sY{{\mathsf Y}}
+\def\sZ{{\mathsf Z}}
+\def\sM{{\mathsf {sENSR}}}
+\def\sE{{\mathsf E}}
+\def\sF{{\mathsf F}}
+\def\sU{{\mathsf U}}
+\def\sV{{\mathsf V}}
+\def\sW{{\mathsf {W}}}
+\def\sG{{\mathsf G}}
+\def \var {{\mathsf {var}   }}
+\def \mmse {{\mathsf {mmse}   }}
+\def \cP {\mathsf{P}_{\mathsf{c}}}
+\newcommand{\dsty}[1]{$\displaystyle #1$}
+\def \AI {{I^{\mathsf{A}}}}
+\def \nP {{\mathsf{P}^{(n)}}}
+\def \np {{\mathsf{p}^{(n)}}}
+\def \nq {{\mathsf{q}^{(n)}}}
+\newcommand{\repdc}[3]{#1_{#2} , \ldots , #1_{#3}}
+\usepackage[font=small,labelsep=space]{caption}
+\captionsetup{%
+	figurename=Fig.,
+}
+%\captionsetup{labelsep = }
+\DeclareCaptionLabelSeparator{dot}{.~}
+%\DeclareCaptionLabelSeparator{bar}{ | }
+\captionsetup{
+	labelsep=dot
+}
+%\theoremstyle{theorem}
+%\theoremstyle{example}
+\newcounter{example}
+\newenvironment{example}[1][]{\refstepcounter{example}\par\medskip
+	\noindent \textit{Example~\theexample. #1} \rmfamily}{\medskip}
+%\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newtheorem{fact}{Fact}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+\newtheorem{conjecture}{Conjecture}
+\newcommand{\markov}{\mathrel\multimap\joinrel\mathrel-%
+	\mspace{-9mu}\joinrel\mathrel-}
+
+\renewcommand{\qedsymbol}{\rule{0.5em}{0.5em}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
+
+\usepackage{times}
+\usepackage{tikz}
+\usepackage{amsmath}
+\usepackage{verbatim}
+\usetikzlibrary{arrows,shapes}
+\tikzstyle{RectObject}=[rectangle,fill=white,draw,line width=0.2mm]
+\tikzstyle{line}=[draw]
+\tikzstyle{arrow}=[draw, -latex]
+\usetikzlibrary{decorations.pathmorphing}
+\usetikzlibrary{calc,shapes, positioning}
+\usepackage{graphicx}
+\usepackage{caption}
+\usetikzlibrary{shapes.geometric}
+
+
+\definecolor{DukeBlue}{HTML}{001A57}
+\definecolor{DarkRed}{rgb}{0.75, 0.0, 0.0}
+\definecolor{DarkGreen}{rgb}{0.0, 0.5, 0.0}
+\newcommand{\TG}[1]{\textbf{\textcolor{DukeBlue}{(#1)}}}
+\newcommand{\SK}[1]{\textbf{\textcolor{Magenta}{[#1]}}}
+\newcommand{\md}[1]{\textcolor{Magenta}{#1}}
+
+
+
+\DeclareFontFamily{U}{BOONDOX-calo}{\skewchar\font=45 }
+\DeclareFontShape{U}{BOONDOX-calo}{m}{n}{
+  <-> s*[1.05] BOONDOX-r-calo}{}
+\DeclareFontShape{U}{BOONDOX-calo}{b}{n}{
+  <-> s*[1.05] BOONDOX-b-calo}{}
+\DeclareMathAlphabet{\mathcalboondox}{U}{BOONDOX-calo}{m}{n}
+\SetMathAlphabet{\mathcalboondox}{bold}{U}{BOONDOX-calo}{b}{n}
+\DeclareMathAlphabet{\mathbcalboondox}{U}{BOONDOX-calo}{b}{n}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
+
+% \IEEEoverridecommandlockouts
+
+\allowdisplaybreaks
+
+% Yi's delimiter
+\newcommand{\paren}[1]{\left(#1\right)}
+\newcommand{\set}[1]{\left\{#1\right\}}
