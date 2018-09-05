@@ -15,14 +15,14 @@
 
 %PDF Info Is Required:
 \pdfinfo{
-/Title (On Label Propagation on Hypergraphs via Wasserstein Barycenter)
+/Title (Wasserstein Soft Label Propagation on Hypergraphs: Algorithm and Generalization Error Bounds)
 /Author (AAAI Press Staff)}
 \setcounter{secnumdepth}{0}  
 
 \begin{document}
 % The file aaai.sty is the style file for AAAI Press 
 % proceedings, working notes, and technical reports.
-\title{On Label Propagation on Hypergraphs via Wasserstein Barycenter}
+\title{Wasserstein Soft Label Propagation on Hypergraphs: Algorithm and Generalization Error Bounds}
 \author{AAAI Press\\
 Association for the Advancement of Artificial Intelligence\\
 2275 East Bayshore Road, Suite 160\\
@@ -34,10 +34,14 @@ Palo Alto, California 94303\\
 Inspired by recent interests of developing machine learning and data mining algorithms on hypergraphs, we investigate in this paper the semi-supervised learning algorithm of propagating "soft labels" (e.g. probability distributions, class membership scores) over hypergraphs, by means of optimal transportation. Borrowing insights from Wasserstein propagation on graphs [Solomon et al. 2014], we re-formulate the label propagation procedure as message-passing algorithm, which renders itself naturally to a generalization applicable to hypergraphs through Wasserstein barycenters. Compared with Laplacian-based semi-supervised learning algorithms, the message-passing algorithm benefits from scalability and efficiency. Furthermore, in a PAC learning framework, we provide generalization error bounds for propagating one-dimensional distributions on graphs and hypergraphs using 2-Wasserstein distance, by establishing the \textit{algorithmic stability} of the proposed semi-supervised learning algorithm. These theoretical results also shed new lights upon deeper understandings of the Wasserstein propagation on graphs. We validate the efficacy of the proposed algorithm through a number of synthetic and real data experiments.
 \end{abstract}
 	
-\section{Introduction and Preliminaries}
-In the last few decades, we have seen a significant progress in semi-supervised learning which is a paradigm of learning algorithms in the presence of both labeled and unlabelled data. The main objective is to combine observed labels with the underlying manifold structure of dataset (e.g., the graph representation of dataset) to identify the labels for unlabelled data samples. We refer the interested readers to \cite{Seeger01learningwith} and \cite{Zhu06semi-supervisedlearning} for overviews of results. Given a dataset, it is a common practice to represent its manifold structure by a weighted graph $G=(V, E)$, where $V$ and $E$ correspond to data samples and their pairwise interactions, respectively. Let $f:V\to\D$ be an assignment of labels in an arbitrary set $\D$ to each vertex. Denote by $V_0\subset V$ the set of labelled vertices, that is $f(v)$ is known for all $v\in V_0$. The goal is to extend $f$ from $V_0$ to entire $V$. In the classical semi-supervised learning setup (e.g., see \cite{Zhu:SSL_Gaussian}) $\D$ is assumed to be a Euclidean space and hence the objective is formulated as minimizing the Dirichlet energy $\sum_{(u, v)\in E}(f(u)-f(v))^2$ over the space of functions $f$ satisfying the boundary condition on $V_0$. The labels are then given by a harmonic function satisfying $\Delta f=0$ on $V\backslash V_0$ for an appropriate positive definite Laplacian matrix $\Delta$.   
+\section{Introduction}
+In the last few decades, we have seen a significant progress in semi-supervised learning, a paradigm of statistical learning that leverages both labeled and unlabelled data. The main objective is to combine observed labels with the underlying graph/manifold structure of the dataset (e.g. the graph representation of dataset) to identify the labels for unlabelled data samples. We refer interested readers to \cite{Zhu06SSL} and 
 
-In many settings, however, it is natural to model the labels as histograms or probability distributions rather than real or integer numbers; we shall refer to these more general labels as \textit{soft} labels. For instance, the traffic density at a given router in the Internet network or topic distributions in the co-authorship network are better modeled as probability distributions. Soft labels not only generalize the real-valued labels but also correspond to the more realistic setting in semi-supervised learning by incorporating the ``uncertainty'' of the observed labels. We model the assignment of soft labels to vertices as a distribution-valued map $V\to \D=\P(L)$ given by $v\mapsto \mu_v$ where $\P(L)$ is the set of all probability measure on the label class $L$ (which can be finite, countably or uncountably infinite). Among the first works addressing semi-supervised learning with soft labels are \cite{Distribution_Propagation1, Distribution_Propagation2, SSL_Measure_Propagation}.  In all these works, the loss function is the Kullback-Leibler (KL) divergence, which often fails to capture the interaction between histogram bins and the manifold structure of the dataset. To overcome this shortcoming, Solomon et al.\ \cite{Solomon:2014} introduced \textit{Wasserstein label propagation} whose objective is to minimize $\sum_{(u, v)\in E}W_2^2(\mu_u,\mu_v)$ over the space of distribution-valued maps satisfying a boundary condition characterized by the observed labels, where $W_2$ denotes the Wasserstein-2 distance (to be defined later). Even though defining harmonic maps for general metric spaces is a challenging task (see, e.g., \cite{Dirichlet_Wasserstein}), Solomon et al.\ \cite{Solomon:2014} related the above minimization to a Dirichlet problem when $L=\R$.\footnote{It is worth mentioning that Jost \cite{Jost} defined Dirichlet energy and  harmonic maps $f: \Omega\to \D$ when $\Omega$ and $\D$ are a compact Riemannian manifold and a metric space with negative Alexandrov curvature, respectively.  Formulating the semi-supervised learning with soft labels as minimizing the Dirichlet energy is therefore challenging, especially because the Wasserstein space, i.e.,  the metric space equipped with Wasserstein-2 distance, is positively curved in the sense of Alexandrov \cite [Section 7.3]{ambrosio2005gradient}. }
+%\cite{Zhu06semi_supervisedlearning} for overviews of results. 
+
+Given a dataset, it is a common practice to represent its manifold structure by a weighted graph $G=(V, E)$, where $V$ and $E$ correspond to data samples and their pairwise interactions, respectively. Let $f:V\to\D$ be an assignment of labels in an arbitrary set $\D$ to each vertex. Denote by $V_0\subset V$ the set of labelled vertices, that is $f(v)$ is known for all $v\in V_0$. The goal is to extend $f$ from $V_0$ to entire $V$. In the classical semi-supervised learning setup (e.g., see \cite{Zhu:SSL_Gaussian}) $\D$ is assumed to be a Euclidean space and hence the objective is formulated as minimizing the Dirichlet energy $\sum_{(u, v)\in E}(f(u)-f(v))^2$ over the space of functions $f$ satisfying the boundary condition on $V_0$. The labels are then given by a harmonic function satisfying $\Delta f=0$ on $V\backslash V_0$ for an appropriate positive definite Laplacian matrix $\Delta$.   
+
+In many settings, however, it is natural to model the labels as histograms or probability distributions rather than numerical or categorical variables; we shall refer to these more general labels as \textit{soft} labels. For instance, the traffic density at a given router in the Internet network, or topic distributions in the co-authorship network, can be more naturally modeled as probability distributions. Soft labels not only generalize the numerical or categorical ``hard'' labels but also preserves more information of interest to real applications, such as the ``uncertainty'' of the estimation and inference. We model the assignment of soft labels to vertices as a distribution-valued map $V\to \D=\P(L)$ given by $v\mapsto \mu_v$ where $\P(L)$ is the set of all probability measure on the label class $L$ (which can be finite, countably or uncountably infinite). Among the first works addressing semi-supervised learning with soft labels are \cite{Distribution_Propagation1, Distribution_Propagation2, SSL_Measure_Propagation}.  In all these works, the loss function is the Kullback-Leibler (KL) divergence, which often fails to capture the interaction between histogram bins and the manifold structure of the dataset. To overcome this shortcoming, Solomon et al.\ \cite{Solomon:2014} introduced \textit{Wasserstein label propagation} whose objective is to minimize $\sum_{(u, v)\in E}W_2^2(\mu_u,\mu_v)$ over the space of distribution-valued maps satisfying a boundary condition characterized by the observed labels, where $W_2$ denotes the Wasserstein-2 distance (to be defined later). Even though defining harmonic maps for general metric spaces is a challenging task (see, e.g., \cite{Dirichlet_Wasserstein}), Solomon et al.\ \cite{Solomon:2014} related the above minimization to a Dirichlet problem when $L=\R$.\footnote{It is worth mentioning that Jost \cite{Jost} defined Dirichlet energy and  harmonic maps $f: \Omega\to \D$ when $\Omega$ and $\D$ are a compact Riemannian manifold and a metric space with negative Alexandrov curvature, respectively.  Formulating the semi-supervised learning with soft labels as minimizing the Dirichlet energy is therefore challenging, especially because the Wasserstein space, i.e.,  the metric space equipped with Wasserstein-2 distance, is positively curved in the sense of Alexandrov \cite [Section 7.3]{ambrosio2005gradient}. }
 
 The main advantages of Wasserstein distance over KL divergence in this context are as follows: 
 \begin{itemize}
@@ -53,6 +57,11 @@ In this work, we extend the framework of \cite{Solomon:2014} to the hyperdgraph-
 provide generalization error bounds \cite{Generalization_semi} for propagating one-dimensional distributions on graphs and hypergraphs by establishing the \textit{algorithmic stability} \cite{Algorithmic_Stability} of  the  proposed  semi-supervised  learning  algorithm. 
 
 
+\subsection{Notation}
+
+Define $\mathsf{bar}$  with the normalization: $\frac{1}{|E|}$....... 
+{\color{blue}:  Define: $\frac{1}{n}\sum_{i=1}^nW^2_2(\mu_i, \nu)$}
+
 The rest of the paper is structured as follows.  *****COMPLETE LATER******
 ~\\
 ~\\
@@ -61,7 +70,7 @@ In this section, we formulate our hypergraph label propagation as a special case
 
 
 A learning problem is specified by a probability distribution $p$ on $X\times Y$ according to which labeled sample pairs $z_i=\left( x_i,y_i \right)$ are drawn and presented to a learning algorithm. The soft label propagation problem amounts to setting $Y$ as a space of probability distributions and performs a regression problem for maps taking values in $Y$. Let 
-$Y$ be the simplex of probability distributions on a complete metric space $\left( N,d_N \right)$, i.e. $Y=\mathrm{Prob}\left( N \right)$. For $\my, \nu\in Y$, their Wasserstein-$2$ distance $W_2$ is given by 
+$Y$ be the simplex of probability distributions on a complete metric space $\left( N,d_N \right)$, i.e. $Y=\mathrm{Prob}\left( N \right)$. For $\m, \nu\in Y$, their Wasserstein-$2$ distance $W_2$ is given by 
 \begin{equation}
   \label{eq:wasserstein-distance}
   W_2 \left( \mu,\nu \right)\coloneqq\inf_{\pi\in\Pi \left( \mu,\nu \right)}\left[\iint_{N\times N}d^2_N \left( x,y \right)\,\mathrm{d}\pi \left( x,y \right)\right]^{\frac{1}{2}},
@@ -107,17 +116,17 @@ We now provide an algorithm for solving \eqref{eq:tikhonov} based on belief prop
 The classical min-sum algorithm \cite{min_Sum} describes this process as follows. 
 %Representing the graph $G=(V, E)$ as a \textit{factor graph}, we can cast the soft label propagation described in last section as a message passing. Each $v\in V$ is a \textit{variable node} and each $e\in E$ is a \textit{factor node}.	
 %Denote the set of edges with direction distinguished by $\vec{E}=\{(i,j)\in V\times V:j\in N(i)\}$.
-At time $t$, vertex $i\in [m]$ has belief $b^{(t)}_i$ about the minimizer $f_i$ of \eqref{eq:tikhonov} and then at time $t+1$ sends message $J^{(t+1)}_{i\to e}$ to edge $e=(i, j)$ and receives message $J^{(t+1)}_{e\to i}$ from $e$ which evolve as
+At time $t$, vertex $i\in [m]$ has belief $b^{(t)}_i$ about the minimizer $f_i$ of \eqref{eq:tikhonov} and then at time $t+1$ sends message $J^{(t)}_{i\to e}$ to edge $e=(i, j)$ and receives message $J^{(t)}_{e\to i}$ from $e$ which evolve as
 % there are two messages on each edge $(i, e)\in E'$ in two different direction: $i\in V$ sends a message $J^{(t)}_{i\to e}:R\to R$ to $e=(i, j)\in E$ and receives a message $J^{(t)}_{e\to i}:R\to R$ from $e$:
 \begin{equation}\label{Eq:Update2}
-J^{(t)}_{i\to e} (b^{(t-1)}_i) = W_2(\mu_i, b^{(t-1)}_i) + \sum_{k\in N(i)\backslash \{j\}}J^{(t-1)}_{(i,k)\to i}(b^{(t-1)}_i)
+J^{(t)}_{i\to e} (b^{(t)}_i) = W_2(\mu_i, b^{(t)}_i) + \sum_{k\in N(i)\backslash \{j\}}J^{(t-1)}_{(i,k)\to i}(b^{(t-1)}_i)
 \end{equation}
 and 
 \begin{equation}\label{Eq:Update}
-    J^{(t)}_{e\to i}(b^{(t-1)}_i) =  \min_{f_j\in \mathrm{Prob}(N)}\Big[W_2(b^{(-1t)}_i, f_j) + J^{(t-1)}_{j\to e}(b^{(t-1)}_j)\Big].
+    J^{(t)}_{e\to i}(b^{(t)}_i) =  \min_{f_j\in \mathrm{Prob}(N)}\Big[W_2(b^{(t)}_i, f_j) + J^{(t-1)}_{j\to e}(b^{(t-1)}_j)\Big].
 \end{equation}
 The first term in \eqref{Eq:Update2} is set to be zero if $i\notin [m]$. The belief is then updated at at time $t+1$ according to evolution
-$$b^{(t+1)}_i \coloneqq \argmin_{f_i} \left[W_2(\mu_i, f_i) + \sum_{k\in V: (i, k)\in E } J^{(t)}_{(i, k)\to i}(b^{(t)}_i)\right].$$
+$$b^{(t+1)}_i \coloneqq \argmin_{f_i} \left[W_2(\mu_i, f_i) + \sum_{k\in V: (i, k)\in E } J^{(t)}_{(i, k)\to i}(f_i)\right].$$
 % {\color{blue}Just remember that the idea of "factor graph" and bringing "factor nodes" in the simple graph case just makes everything messier! Because the above two equations can be easily combined as the following: 
 % \begin{equation}\label{Eq:Update}
 %     J^{(t)}_{j\to i}(x_i) =  \min_{x_j}\Big[f_i(x_j) + f_{ij}(x_i, x_j) + \sum_{v\in N(j)\backslash i}J^{(t-1)}_{v\to i}(x_j)\Big].
@@ -133,7 +142,7 @@ $$b^{(t+1)}_i \coloneqq \argmin_{f_i} \left[W_2(\mu_i, f_i) + \sum_{k\in V: (i, 
 % $$x_i^{(t)} = \argmin_{y_i} b^{(t)}_i(x_i).$$
 
 %$$x_i^{(t)} = \argmin_{y_i}f_i(y_i) +\sum_{v\in N(i)}J^{(t)}_{v\to i}(y_i).$$ 
-Convergence of $b_i^{(t)}$ to the true minimizer $f^*_i$ can be guaranteed under some (mild) conditions on initial beliefs if $G$ is a tree. 
+Convergence of $b_i^{(t)}$ to the true minimizer $f^*_i$ can be guaranteed under some (mild) conditions on initial beliefs if $G$ is a tree (see e.g., \cite{min_Sum}). 
 \subsection{Wasserstein Label Propagation for Hypergraph}
 Let now $X$ be represented by a hypergraph $H=(V, \mathcal E)$. Since each hyperedge may contain arbitrary number of vertices, the minimization \eqref{eq:tikhonov} fails to formulate our learning objective. Nevertheless, the belief propagation updates \eqref{Eq:Update2} and \eqref{Eq:Update} can naturally be extended to the message passing between vertex $i$ and hyperedge $E$ containing $i$ as 
 \begin{equation}\label{Eq:Update_H_2}
@@ -141,29 +150,188 @@ J^{(t)}_{i\to E} (b_i^{(t)}) = W_2(\mu_i, b_i^{(t)}) + \sum_{E'\in \mathcal E\ba
 \end{equation}
 and 
 \begin{equation}\label{Eq:Update_H}
-    J^{(t)}_{E\to i}(b_i^{(t)}) =  \min_{f_{E\backslash \{i\}}}\Big[\mathsf{bary}(E) + \sum_{k\in E\backslash \{i\}}J^{(t-1)}_{k\to E}(b_k^{(t-1)})\Big].
+    J^{(t)}_{E\to i}(b_i^{(t)}) =  \min_{f_{E\backslash \{i\}}}\Big[\mathsf{bar}(E) + \sum_{k\in E\backslash \{i\}}J^{(t-1)}_{k\to E}(b_k^{(t-1)})\Big].
 \end{equation}
-where $f_{E\backslash \{i\}}=\{f_k\in\mathrm{Prob}(N): k\in E\backslash\{i\}\}$.
+where  $f_{E\backslash \{i\}}=\{f_k\in\mathrm{Prob}(N): k\in E\backslash\{i\}\}$.
+% We construct the factor graph $(V\cup \mathcal E, E')$ corresponding to $H$. Unlike the simple graph case, each factor node (i.e., hyperedge) $E$ has degree larger than 2. The messages over factor graph evolve as the following:
+
+% $$J^{(t)}_{i\to E} (x_i) = f_i(x_i) + \sum_{\hat E\in \mathcal E\backslash\{E\}: i\in \hat E}J^{(t-1)}_{\hat E\to i}(x_i)$$
+% and 
+% \begin{equation}\label{Eq:Update}
+%     J^{(t)}_{E\to i}(x_i) =  \min_{x_{E\backslash \{i\}}}\Big[\mathsf{bar}(E) + \sum_{k\in E\backslash \{i\}}J^{(t-1)}_{k\to E}(x_k)\Big].
+% \end{equation}
+% In above, we use $x_{E\backslash \{i\}}$ to denote the set of probability measures corresponding to vertices in $E$ expect for vertex $i$ whose probability measure is fixed $x_i$.
+The belief of vertex $i\in [m]$ is then obtained according to the following rule:
+$$b_i^{(t+1)}=\argmin_{f_i}\left[W_2(\mu_i, f_i) + \sum_{E\in \mathcal{E}:i\in E}J^{(t)}_{E\to i}(f_i)\right].$$
 
 
-
-
-
-
-
-We construct the factor graph $(V\cup \mathcal E, E')$ corresponding to $H$. Unlike the simple graph case, each factor node (i.e., hyperedge) $E$ has degree larger than 2. The messages over factor graph evolve as the following:
-
-$$J^{(t)}_{i\to E} (x_i) = f_i(x_i) + \sum_{\hat E\in \mathcal E\backslash\{E\}: i\in \hat E}J^{(t-1)}_{\hat E\to i}(x_i)$$
-and 
-\begin{equation}\label{Eq:Update}
-    J^{(t)}_{E\to i}(x_i) =  \min_{x_{E\backslash \{i\}}}\Big[\mathsf{bary}(E) + \sum_{k\in E\backslash \{i\}}J^{(t-1)}_{k\to E}(x_k)\Big].
+This belief propagation update rules justify the following formulation of label propagation for hypergraphs
+\begin{equation}\label{eq:tikhonoc_Hyper}
+    \min_{f:V\to \mathrm{Prob}(N)} \frac{1}{m}\sum_{i=1}^m W_2(\mu_i, f_i) + \gamma\sum_{E\in \mathcal E}\mathsf{bar}(E)
 \end{equation}
-In above, we use $x_{E\backslash \{i\}}$ to denote the set of probability measures corresponding to vertices in $E$ expect for vertex $i$ whose probability measure is fixed $x_i$.
+which is a natural generalization of \eqref{eq:tikhonov}.
 
-This belief propagation update rules justify the following formulation for Wasserstein semi-supervised learning for hypergraph as follows:
+\section{Label Propagation for One-dimensional Distributions}
+In this section, we assume that the labels are given by one-dimensional probability measures, i.e., $N\subset \R$. The main contribution of this section states that if $\mu_i\in \mathrm{Prob}(N)$ with $N\subset \R$, then Hypergraph label propagation is equivalent to a weighted  Wasserstein label propagation for a certain graph. 
 
-$$\min_{x\in \L^V} \sum_{i\in V_0} f_i(x_i) + \sum_{E\in \mathcal E} \mathsf{bary}(E)$$
-which is a natural generalization of \eqref{Def:Minimization2}.
+Given a hypergraph $H=(V, \mathcal E)$, we define its \textit{clique representation} as a graph $G_H=(V, E_H)$, {\color{blue}Weighted graph!} where $E_H=\{(i, j):\exists E\in \mathcal E, \{i, j\}\subset E\}$. The main advantage of one-dimensional soft labels is illustrated by the following classical result in optimal transportation theory.
+\begin{theorem}\cite{villani2003topics}\label{Thm:Wasserstein_One}
+Let $\mu, \nu\in \mathrm{Prob}(N)$ with $N\subset\R$ with cumulative density functions (cdf) $F_\mu$ and $F_\nu$, respectively. Then $$W_2^2(\mu, \nu)=\int_{0}^1\left(F_\mu^{-1}(s)-F_\nu^{-1}(s)\right)^2\text{d}s,$$
+where $F_{\mu}^{-1}$ and $F_{\nu}^{-1}$ are the generalized inverses of $F_\mu$ and $F_\nu$, respectively, i.e., $F_\mu^{-1}(s)\coloneqq \inf\{x\in N:F_\mu(x)>s\}$. 
+\end{theorem}
+The explicit expression for Wasserstein distance enables us to derive the barycenter of any number of one-dimensional distributions in a closed form. 
+\begin{theorem}\cite{bigot2017}
+\label{Thm:Barycenter_One}
+Let $\rho_1, \dots, \rho_m\in \mathrm{Prob}(N)$ be $m$ probability distributions on $N\subset\R$ with cumulative density functions $F_{\rho_i}$, $i\in [m]$. Let $\rho_{\mathsf{b}}$ be the (unique) Wasserstein barycenter of $\{\rho_i\}_{i=1}^m$. Then the generalized inverse cdf $F^{-1}_{\mathsf{b}}$ of $\rho_{\mathsf{b}}$ is given by 
+$$F^{-1}_{\mathsf{b}}(s)=\frac{1}{m}\sum_{i=1}^mF_{\rho_i}^{-1}(s).$$
+\end{theorem}
+{\color{blue} change $m$ here to $k$}
+Since the inverse cdf and the distribution are in one-to-one correspondence, this theorem in fact computes the barycenter of $\{\rho_i\}_{i=1}^m$. In light of Theorem~\ref{Thm:Barycenter_One}, one can simplify the barycenter of hyperedge $E$ that contains vertices, say, $\{1, 2, \dots, k\}$ as 
+\begin{eqnarray}
+\mathsf{bar}(E) &=& \frac{1}{k}\sum_{i=1}^kW^2_2(\mu_i, \mu_\mathsf{b})\nonumber\\
+&=&\frac{1}{k}\sum_{i=1}^k\int_{0}^1\left(F_{\mu_i}^{-1}(s)-F_\mathsf{b}^{-1}(s)\right)^2\text{d}s\nonumber\\
+&=&\frac{1}{k}\int_{0}^{1}\sum_{i=1}^k\left(F_{\mu_i}^{-1}(s)-\frac{1}{k}\sum_{i=1}^kF_{\mu_i}^{-1}(s)\right)^2\text{d}s\nonumber\\
+&=&\frac{1}{k^2}\int_0^1\sum_{i=1}^k\sum_{j=i+1}^n\left(F_{\mu_i}^{-1}(s)-F_{\mu_j}^{-1}(s)\right)^2 \nonumber\\
+&=&\frac{1}{k^2}\sum_{i=1}^k\sum_{j=i+1}^kW_2^2(\mu_i, \mu_j)\label{Eq:One_D_Equivalence}
+\end{eqnarray}
+where the first and second equalities follow from Theorems~\ref{Thm:Wasserstein_One} and \ref{Thm:Barycenter_One}, respectively. It follows from \eqref{Eq:One_D_Equivalence} that in one-dimensional case the barycenter of each hyperedge of $H$ is given by the weighted average Wasserstein distance of the corresponding clique representation $G_H$. Consequently, label propagation for hypergraph formulated in \eqref{eq:tikhonoc_Hyper} is 
+equivalent to Wasserstein label propagation for graph given in  \eqref{eq:tikhonov}. This then motivates to concentrate on the latter in the following as the label propagation for both graph and hypergraph.
+
+According to  Theorem~\ref{Thm:Wasserstein_One}, one can simplify \eqref{eq:tikhonov} as 
+\begin{equation*}
+  \begin{aligned}
+    &\min_{f:V\to \mathrm{Prob}(N)}\frac{1}{m}\sum_{i=1}^m \int_0^1 \left(F_{\mu_i}^{-1}\left( s \right)-F_{f_i}^{-1}\left( s \right)\right)^2\mathrm{d}s \\
+    &\qquad \qquad\qquad +\gamma\sum_{\left( i,j \right)\in E}\int_0^1 \left( F_{f_i}^{-1}\left( s \right)-F_{f_j}^{-1}\left( s \right) \right)^2\mathrm{d}s\\
+    &=\min_{f:V\to \mathrm{Prob}(N)}\int_0^1 \Big[ \frac{1}{m} \sum_{i=1}^m \left(F_{\mu_i}^{-1}\left( s \right)-F_{f_i}^{-1}\left( s \right)\right)^2\\
+    &\qquad \qquad \qquad +\gamma \sum_{\left( i,j \right)\in E}\left( F_{f_i}^{-1}\left( s \right)-F_{f_j}^{-1}\left( s \right) \right)^2  \Big]\mathrm{d}s.
+  \end{aligned}
+  \end{equation*}
+Recall that the inverse cdf's and the distributions are in one-to-one correspondences, and all $F_{\mu_i}^{-1}$ are given. It thus suffices to solve for the $F_{f_i}^{-1}$'s in their entirety, then recover each probability distribution at vertex $i$ from $F_{f_i}^{-1}:[0,1]\rightarrow\mathbb{R}$. To simplify notations, define
+\begin{equation*}
+  \begin{aligned}
+    \Phi:V\times \left[ 0,1 \right]&\rightarrow \mathbb{R}\\
+    \left( i,s \right)&\mapsto F_{f_i}^{-1}\left( s \right)
+  \end{aligned}
+\end{equation*}
+and denote for each $s\in \left[ 0,1 \right]$
+\begin{equation*}
+  \Phi_s \left( i \right):=\Phi \left( i,s \right)\qquad\forall i\in G.
+\end{equation*}
+Hence, each $\Phi_s$ can be viewed as a function defined on the vertices of the graph $G$. For simplicity, we will identify each $\Phi_s$ with a real column vector of length $n=\left| V \right|$. Let $L$ be the graph Laplacian associated with $G$, which is a real square matrix of $n$-by-$n$ defined by
+\begin{equation*}
+  L:=D-W
+\end{equation*}
+where $W\in \mathbb{R}^{n\times n}$ is the ($0$-$1$) adjacency matrix of the graph $G$, and $D\in \mathbb{R}^{n\times n}$ is a diagonal matrix with the degree of vertex $j$ at its $\left( j,j \right)$-th entry. Then the regularization term in \eqref{eq:tikhonov} can be written in terms of $L$ as
+\begin{equation*}
+  \gamma\int_0^1\Phi_s^{\top}L\Phi_s\mathrm{d}s,
+\end{equation*}
+and thus the entire Tikhonov regularization problem \eqref{eq:tikhonov} can be written as
+\begin{equation}\label{eq:tikhonov-one-dimensional}
+  \begin{align}
+      &\min_{\Phi:V\times \left[ 0,1 \right]\rightarrow \mathbb{R}}\frac{1}{m}\sum_{i=1}^m\int_0^1 \left| F_{\mu_i}^{-1}\left( s \right)-\Phi_s \left( i \right) \right|^2\mathrm{d}s\\
+      &\qquad \qquad\qquad \qquad +\gamma\int_0^1\Phi_s^{\top}L\Phi_s\,\mathrm{d}s.
+  \end{align}
+\end{equation}
+If one vaguely views the integral with respect to $s$ over $\left[ 0,1 \right]$ as an infinite summation, the optimization problem \eqref{eq:tikhonov-one-dimensional} can be viewed as linear combinations of an infinite number of Tikhonov regularization problems, one for each $s\in \left[ 0,1 \right]$. Furthermore, all of these sub-problems are decoupled from each other. It thus suffices to solve each subproblem individually, i.e., for each fixed $s\in \left[ 0,1 \right]$ solve
+\begin{equation}
+  \label{eq:tikhonov-one-dimensional-subproblem}
+  \min_{\Phi_s\in\mathbb{R}^n}\frac{1}{m}\sum_{i=1}^m \left( F_{\mu_i}^{-1}\left( s \right)-\Phi_s \left( i \right) \right)^2+\gamma \Phi_s^{\top}L\Phi_s.
+\end{equation}
+In fact, this subsumes Wasserstein label propagation, as \cite[Proposition 2]{Solomon:2014} is the special case\footnote{The case $\gamma\rightarrow0$ is considered in \cite{Belkin2004} as a parameter-free ``interpolated regularization.''} of this argument with $\gamma\rightarrow 0$. Once we solve each subproblem,  we will need to ensure that the resulting solutions $\Phi_s:s\in \left[ 0,1 \right]$ satisfies certain compatibility conditions that ensure each map $s\mapsto \Phi_s \left( i \right)$ for fixed $i\in V$ is the inverse cdf of a probability distribution. but the conditions required to ensure this will become straightforward after we derive the closed-form solution of each subproblem \eqref{eq:tikhonov-one-dimensional-subproblem}.
+
+The solutions to Tikhonov regularization problems \eqref{eq:tikhonov-one-dimensional-subproblem} is indeed well-known. In \cite{Belkin2004} the authors derived the solutions for the graph case, by simple linear algebra. Let $\mathbf{1}=\left( 1,\cdots,1 \right)^{\top}\in\mathbb{R}^n$ be the column vector of all ones, and
+$$T_\ell=\mathrm{diag}\left( t_1,\cdots,t_{\ell},0,\cdots,0 \right)^{\top}\in\mathbb{R}^n$$
+where $t_i$ is the multiplicity of the vertex $i\in V$ in the training set $S$ (we assumed without loss of generality that the training samples are the first $\ell$ vertices, for notational convenience), and
+\begin{equation}
+  \label{eq:y-defn}
+  \mathbf{y}_s=\left( \sum_{v_{i}=1}F_{\mu_i}^{-1}\left( s \right),\cdots,\sum_{v_i=\ell}F_{\mu_i}^{-1}\left( s \right),0,\cdots,0 \right)^{\top}\in\mathbb{R}^n
+\end{equation}
+i.e., for $1\leq i\leq \ell$, the $i$-th entry of $\mathbf{y}$ is the sum of the $t_i$ values of the inverse c.d.f.'s of over $i\in V$. With these notations, it is easy to write down the Euler-Lagrange equation of the optimization problem \eqref{eq:tikhonov-one-dimensional-subproblem} as
+\begin{equation}
+  \label{eq:tikhonov-one-dimensional-subproblem-euler-lagrange}
+  \left( T_{\ell}+m\gamma L \right)\Phi_s^{*}=\mathbf{y}_s
+\end{equation}
+and one can na\"ively expect a solution to \eqref{eq:tikhonov-one-dimensional-subproblem} of the form $\left( T_{\ell}+m\gamma L \right)^{-1}\mathbf{y}_s$. But there is a catch here: we need to ensure that the operator $T_{\ell}+m\gamma L$ is invertible. This is not totally trivial: actually, neither $T_{\ell}$ nor $L$ is invertible on its own right! Nonetheless, assuming the graph is connected, the nullspace of $L$ is one-dimensional and spanned precisely by the all-one vector $\mathbf{1}$. This means that $L$ will be invertible on the orthogonal complement of the one-dimensional subspace spanned by $\mathbf{1}$. Furthermore, noting that
+\begin{equation}
+  \label{eq:standard-functional-analysis}
+  T_{\ell}+m\gamma L=m\gamma \left( \frac{1}{m\gamma}T_{\ell}+L \right)
+\end{equation}
+by standard functional analysis we know that the perturbed operator $L+\left( m\gamma \right)^{-1}T_{\ell}$ will be invertible on the orthogonal complement as well, provided that $m\gamma$ is sufficiently large. In fact, the invertibility holds for
+\begin{equation*}
+  \frac{\max \left\{ t_1,\cdots,t_{\ell} \right\}}{m\gamma}<\lambda_1\qquad\Leftrightarrow\qquad \gamma\geq \frac{\max \left\{ t_1,\cdots,t_{\ell} \right\}}{m\lambda_1}
+\end{equation*}
+where $\lambda_1$ is the smallest non-zero eigenvalue of $L$, or the \emph{spectral gap} of the connected graph $G$. This is consistent with the requirement in the theoretical analysis of \cite{Belkin2004} that the regularization parameter should not be too small.
+
+This observation, together with the observation that the quadratic cost function in \eqref{eq:tikhonov-one-dimensional-subproblem} is invariant under a global translation, we can preprocess the input data by subtracting scalar
+\begin{equation}
+  \label{eq:off-set-defn}
+  \bar{y}_s := \frac{1}{m}\mathbf{1}^{\top}\mathbf{y}_s=\frac{1}{m}\sum_{i=1}^mF_{\mu_i}^{-1}\left( s \right)
+\end{equation}
+from each $F_{\mu_i}^{-1}\left( s \right)$, applying the inverse of $T_\ell+m\gamma L$, and finally add $\bar{y}_s$ back to the obtained solution. More specifically, we would like to solve the equivalent optimization problem
+\begin{equation}
+  \label{eq:tikhonov-one-dimensional-subproblem-equiv}
+  \Phi_s^*=\argmin_{\Phi_s\in\mathbb{R}^n}\frac{1}{m}\sum_{i=1}^m \left[\left( F_{\mu_i}^{-1}\left( s \right)-\bar{y}_s\right)-\left(\Phi_s \left( i \right)-\bar{y}_s \right)\right]^2+\gamma \left(\Phi_s-\bar{y}_s\mathbf{1}\right)^{\top}L\left(\Phi_s-\bar{y}_s\mathbf{1}\right)
+\end{equation}
+which gives
+\begin{equation*}
+  \Phi_s^*-\bar{y}_s\mathbf{1}=\left( T_{\ell}+m\gamma L \right)^{-1}\left(\mathbf{y}_s-\bar{y}_sT_\ell\mathbf{1}\right).
+\end{equation*}
+Therefore, the solution to \eqref{eq:tikhonov-one-dimensional-subproblem} takes the form
+\begin{equation}
+  \label{eq:sol-tikhonov-one-dimensional-subproblem}
+  \begin{aligned}
+    \Phi_s^{*}&=\left( T_{\ell}+m\gamma L \right)^{-1}\left(\mathbf{y}_s-\bar{y}_sT_\ell\mathbf{1}\right)+\bar{y}_s\mathbf{1}\\
+    &=\left( T_{\ell}+m\gamma L \right)^{-1}\left(\mathbf{y}_s-\frac{1}{m} T_\ell\mathbf{1}\mathbf{1}^{\top}\mathbf{y}_s\right)+\frac{1}{m}\mathbf{1}\mathbf{1}^{\top}\mathbf{y}_s.
+  \end{aligned}
+\end{equation}
+We emphasize here that the notation $\left( T_{\ell}+m\gamma L \right)^{-1}$ alone does not make much sense because the matrix $T_{\ell}+m\gamma L$ may well be non-invertible; only the notation $\left( T_{\ell}+m\gamma L \right)^{-1}u$ for some $u\in\mathbb{R}^n$ satisfying $\mathbf{1}^{\top}u=0$ bears actual meanings.
+\begin{remark}
+  Alternatively, one can derive a solution to \eqref{eq:tikhonov-one-dimensional-subproblem} by directly applying the pseudo-inverse of $T_{\ell}+m\gamma L$ to $\mathbf{y}_s$, i.e. setting $\Phi_s^{*}:=\left( T_{\ell}+m\gamma L \right)^{\dagger}\mathbf{y}_s$; this avoids the requirement that $\gamma$ needs not be too small, but leaves the algorithmic stability of the resulting solution $\Phi_s^{*}$ in question.
+\end{remark}
+
+Now that we have obtained closed-form solutions \eqref{eq:sol-tikhonov-one-dimensional-subproblem} to subproblems \eqref{eq:tikhonov-one-dimensional-subproblem} for each $s\in \left[ 0,1 \right]$, it is imperative to guarantee that the closed-form solutions $\left\{ \Phi_s^{*}\mid 0\leq s\leq 1 \right\}$ do piece together and give rise to inverse c.d.f.'s at each vertex $i\in V$. This basically requires that, for each $i\in V$, the map $\left[ 0,1 \right]\ni s\mapsto \Phi_s^{*}\left( i \right)\in\mathbb{R}$ should be non-decreasing and right continuous. The right continuity is obvious, since for each $i\in V$ the map $\left[ 0,1 \right]\ni s\mapsto \mathbf{y}_s \left( i \right)$ is right continuous, and the linear combination of right continuous functions is still right continuous, thus the assertion follows from the closed-form expression \eqref{eq:sol-tikhonov-one-dimensional-subproblem}. The monotonicity would be guaranteed if there is a ``maximum principle'' for the operator $T_{\ell}+m\gamma L$, or equivalently $L+\left( m\gamma \right)^{-1}T$, on the graph $G$, i.e. if $\mathbb{R}^{n}\ni \mathbf{y}\geq 0$ (entrywise inequality) and $\left( T_{\ell}+m\gamma L \right)\Phi=\mathbf{y}$ then $\Phi\geq 0$ (entrywise inequality). This is because for any $0\leq t\leq s\leq 1$ we already have $\mathbf{y}_s-\mathbf{y}_t\geq 0$ by the monotonicity of inverse c.d.f.'s, and such a ``maximum principle'' would then guarantee $\Phi_s-\Phi_t\geq 0$ entrywise. Such maximum principles abound for graph Laplacians, see e.g. \cite{HS1997,CCK2007}. It is natural to expect such a maximum principle to hold for $L+\left( m\gamma \right)^{-1}T$ as well, since $T$ is a non-negative.
+
+\begin{lemma}[Maximum Principle]
+  \label{lem:maximum-principle}
+  If $\Phi\in\mathbb{R}^n$ is such that $\left[\left( T_{\ell}+m\gamma L \right)\Phi\right] \left(i\right)\geq 0$ for all $1\leq i\leq \ell$ and $\left[\left( T_{\ell}+m\gamma L \right)\Phi\right] \left(i\right)=0$ for all $\ell+1\leq i\leq n$, then $\Phi$ attains both its maximum and minimum over $i=1,\cdots,n$ within $\left\{ 1,\cdots,\ell \right\}$. In particular, $\Phi\left(i\right)\geq 0$ for all $1\leq i\leq n$.
+\end{lemma}
+\begin{proof}
+  The conditions on $\Phi$ can be written as
+  \begin{align}
+      \left[\frac{t_i}{m\gamma}+\mathrm{deg}\left(i\right)\right]\Phi \left( i \right)-\sum_{j:j\sim i}\Phi \left( j \right)\geq 0 & \qquad 1\leq i\leq \ell\label{eq:maximum-principle-boundary}\\
+      \mathrm{deg}\left(i\right)\Phi \left( i \right)-\sum_{j:j\sim i}\Phi \left( j \right)=0 & \qquad \ell+1\leq i\leq n\label{eq:maximum-principle-interior}
+  \end{align}
+  where $\mathrm{deg}\left( i \right)\geq 1$ is the degree of vertex $i$ in graph $G$. First, we assert that the minimum of $\Phi$ must be attained among the vertices $1,\cdots,\ell$, for otherwise, if $\ell+1\leq i_*=\argmin_{i\in V}\Phi \left( i \right)\leq n$, then by \eqref{eq:maximum-principle-interior} we have
+  \begin{equation*}
+    \mathrm{deg}\left(i_*\right)\Phi \left( i_* \right)=\sum_{j:j\sim i_*}\Phi \left( j \right)\geq \sum_{j:j\sim i_*}\Phi \left( i_* \right)=\mathrm{deg}\left(i_*\right)\Phi \left( i_* \right)
+  \end{equation*}
+which implies $\Phi \left( j \right)=\Phi \left( i_* \right)$ for all vertices $j\sim i_*$. This argument can be repeated until the constant value propagates into the vertices within $1,\cdots,\ell$, and the assertion follows from the connectivity of the graph. The assertion for the maximum can be established analogously. Next we argue that the minimum of $\Phi$ on the vertices of $G$ must be non-negative. Assume the contracy, i.e. the minimum attained at $i_*\in \left[ 1,\ell \right]$ is strictly negative, then by \eqref{eq:maximum-principle-boundary} we have
+  \begin{equation*}
+    0\leq \left[\frac{t_{i_*}}{m\gamma}+\mathrm{deg}\left(i_{*}\right)\right]\Phi \left( i_{*} \right)-\sum_{j:j\sim i_{*}}\Phi \left( j \right)=\frac{t_{i_*}}{m\gamma}\Phi \left( i_* \right)+\sum_{j:j\sim i_*}\left[ \Phi \left( i_* \right)-\Phi \left( j \right) \right]<0
+  \end{equation*}
+  where the strict inequalty follows from the counter-assumption $\Phi \left( i_{*} \right)<0$. This contradiction completes our proof that $\Phi \geq 0$ on the entire graph $G$.
+\end{proof}
+
+\begin{proposition}
+  For any vertex $i\in V$, the closed-form solutions \eqref{eq:sol-tikhonov-one-dimensional-subproblem} is non-decreasing with respect to $s\in \left[ 0,1 \right]$.
+\end{proposition}
+\begin{proof}
+  By the equivalence of \eqref{eq:tikhonov-one-dimensional-subproblem-equiv} and \eqref{eq:tikhonov-one-dimensional-subproblem}, the solutions $\Phi_s$ satisfies the Euler-Lagrange equations for \eqref{eq:tikhonov-one-dimensional-subproblem}:
+  \begin{equation*}
+    \left( T_{\ell}+m\gamma L \right)\Phi_s^{*}=\mathbf{y}_s.
+  \end{equation*}
+  For any $0\leq t\leq s\leq 1$, subtracting two Euler-Lagrange equations yields
+  \begin{equation*}
+    \left( T_{\ell}+m\gamma L \right)\left(\Phi_s^{*}-\Phi_t^{*}\right)=\mathbf{y}_s-\mathbf{y}_t\geq 0
+  \end{equation*}
+  where the inequality follows from the definition of $\mathbf{y}_s$ in \eqref{eq:y-defn}. Furthermore, it is straightforward to see that $\mathbf{y}_s-\mathbf{y}_t$ satisfies the assumption in Lemma~\ref{lem:maximum-principle}, which then implies $\Phi_s^{*}\geq \Phi_t^{*}$.
+\end{proof}
+
+We can now rest assured that the solutions \eqref{eq:sol-tikhonov-one-dimensional-subproblem} indeed constitute an inverse c.d.f. at each vertex $i\in V$.
+
+
+
+
 
 
 
@@ -177,6 +345,7 @@ which is a natural generalization of \eqref{Def:Minimization2}.
 In this section we try out our soft label propagation approach to three datasets represented as hypergraphs. Two of the datasets, Mushroom and congressional voting record, are from the UCI machine learning repository, and the last one is 
 \subsection{Mushroom}
 \textcolor{blue}{I summarize the results here, and I am going to expand it later.}
+$97$ hyperedges including description of the shape, color, and habitat, etc of the mushrooms. 
 $1000$ edible and $1000$ poisonous mushrooms; 
 $92$ hyperedges;
 $20$ labeled examples from each category, so $2\%$ labeled data;
@@ -186,7 +355,9 @@ $1$-dimensional Gaussian distribution; edible $\mathsf{Norm}\paren{-1, 0.01}$, p
 
 \subsection{Congressional Voting Record}
 \textcolor{blue}{I summarize the results here, and I am going to expand it later.}
-$431$ congressional men and women. $7$ issues, $14$ hyperedges;
+$98$th Congress, $2$nd session
+Voting record on $16$ issues and hence $32$ hyperedges.
+$434$ congressional men and women. $7$ issues, $14$ hyperedges;
 $10$ labeled examples from each party, so $4.64\%$ labeled data;
 $2$-dimensional Gaussian distribution; democrat $\mathsf{Norm}\paren{(1, 0), 0.05I_2}$, republican $\mathsf{Norm}\paren{(0, 1), 0.05I_2}$; average error rate on $20$ runs with is $11.0\%$.
 $1$-dimensional Gaussian distribution; democrat $\mathsf{Norm}\paren{-1, 0.01}$, republican $\mathsf{Norm}\paren{1, 0.01}$; average error rate on $20$ runs with is $10.9\%$.
@@ -256,7 +427,7 @@ $1$-dimensional Gaussian distribution; democrat $\mathsf{Norm}\paren{-1, 0.01}$,
 	
 % %	
 % %	{\color{red} POTENTIAL BULLSHIT: It seems to me that what matters is the number of labelled measures neighbors to each unlabelled measure, i.e., 
-% %		$$\nu_j = \mathsf{Bary}[\{\mu_r: \exists E\in \cE: r\in E, j\in E\}].$$ 
+% %		$$\nu_j = \mathsf{bar}[\{\mu_r: \exists E\in \cE: r\in E, j\in E\}].$$ 
 % %		The vertices whose neighbors are not labelled can be trivially assigned!!
 % %		If this is not optimal, at least, this is the easiest assignment.
 % %	}
