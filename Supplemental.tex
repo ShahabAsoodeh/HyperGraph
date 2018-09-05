@@ -1,0 +1,154 @@
+\def\year{2019}\relax
+%File: formatting-instruction.tex
+\documentclass[letterpaper]{article} %DO NOT CHANGE THIS
+\include{mypreamble}
+
+\usepackage{aaai19}  %Required
+\usepackage{times}  %Required
+\usepackage{helvet}  %Required
+\usepackage{courier}  %Required
+\usepackage{url}  %Required
+\usepackage{graphicx}  %Required
+\frenchspacing  %Required
+\setlength{\pdfpagewidth}{8.5in}  %Required
+\setlength{\pdfpageheight}{11in}  %Required
+
+%PDF Info Is Required:
+\pdfinfo{
+/Title (Supplementary Materials for "Wasserstein Soft Label Propagation on Hypergraphs: Algorithm and Generalization Error Bounds")
+/Author (AAAI Press Staff)}
+\setcounter{secnumdepth}{0}  
+
+\begin{document}
+% The file aaai.sty is the style file for AAAI Press 
+% proceedings, working notes, and technical reports.
+\title{Supplemental Material for "Wasserstein Soft Label Propagation on Hypergraphs: Algorithm and Generalization Error Bounds"}
+\author{AAAI Press\\
+Association for the Advancement of Artificial Intelligence\\
+2275 East Bayshore Road, Suite 160\\
+Palo Alto, California 94303\\
+}
+\maketitle
+
+\begin{abstract}
+Below are the supplemental material for the paper  "Wasserstein Soft Label Propagation on Hypergraphs: Algorithm and Generalization Error Bounds"   submitted to AAAI 2019 
+\end{abstract}
+	
+\section{Proof of Lemma~\ref{lem:maximum-principle}}
+  The conditions on $\Phi$ can be written as
+  \begin{align}
+      \left[\frac{t_i}{m\gamma}+\mathrm{deg}\left(i\right)\right]\Phi \left( i \right)-\sum_{j:j\sim i}\Phi \left( j \right)\geq 0 & \qquad 1\leq i\leq \ell\label{eq:maximum-principle-boundary}\\
+      \mathrm{deg}\left(i\right)\Phi \left( i \right)-\sum_{j:j\sim i}\Phi \left( j \right)=0 & \qquad \ell+1\leq i\leq n\label{eq:maximum-principle-interior}
+  \end{align}
+  where $\mathrm{deg}\left( i \right)\geq 1$ is the degree of vertex $i$ in graph $G$. First, we assert that the minimum of $\Phi$ must be attained among the vertices $1,\cdots,\ell$, for otherwise, if $\ell+1\leq i_*=\argmin_{i\in V}\Phi \left( i \right)\leq n$, then by \eqref{eq:maximum-principle-interior} we have
+  \begin{equation*}
+    \begin{aligned}
+      \mathrm{deg}\left(i_*\right)\Phi \left( i_* \right)&=\sum_{j:j\sim i_*}\Phi \left( j \right)\\
+      &\geq \sum_{j:j\sim i_*}\Phi \left( i_* \right)=\mathrm{deg}\left(i_*\right)\Phi \left( i_* \right)
+    \end{aligned}
+  \end{equation*}
+which implies $\Phi \left( j \right)=\Phi \left( i_* \right)$ for all vertices $j\sim i_*$. This argument can be repeated until the constant value propagates into the vertices within $1,\cdots,\ell$, and the assertion follows from the connectivity of the graph. The assertion for the maximum can be established analogously. Next we argue that the minimum of $\Phi$ on the vertices of $G$ must be non-negative. Assume the contracy, i.e. the minimum attained at $i_*\in \left[ 1,\ell \right]$ is strictly negative, then by \eqref{eq:maximum-principle-boundary} we have
+\begin{equation*}
+  \begin{aligned}
+    0 &\leq \left[\frac{t_{i_*}}{m\gamma}+\mathrm{deg}\left(i_{*}\right)\right]\Phi \left( i_{*} \right)-\sum_{j:j\sim i_{*}}\Phi \left( j \right)\\
+    &=\frac{t_{i_*}}{m\gamma}\Phi \left( i_* \right)+\sum_{j:j\sim i_*}\left[ \Phi \left( i_* \right)-\Phi \left( j \right) \right]<0
+  \end{aligned}
+\end{equation*}
+ where the strict inequalty follows from the counter-assumption $\Phi \left( i_{*} \right)<0$. This contradiction completes our proof that $\Phi \geq 0$ on the entire graph $G$.
+
+\section{Proof of Proposition~\ref{Propo:Non_Decreasing}}
+  By the equivalence of \eqref{eq:tikhonov-one-dimensional-subproblem-equiv} and \eqref{eq:tikhonov-one-dimensional-subproblem}, the solutions $\Phi_s$ satisfies the Euler-Lagrange equations for \eqref{eq:tikhonov-one-dimensional-subproblem}:
+  \begin{equation*}
+    \left( T_{\ell}+m\gamma L \right)\Phi_s^{*}=\mathbf{y}_s.
+  \end{equation*}
+  For any $0\leq t\leq s\leq 1$, subtracting two Euler-Lagrange equations yields
+  \begin{equation*}
+    \left( T_{\ell}+m\gamma L \right)\left(\Phi_s^{*}-\Phi_t^{*}\right)=\mathbf{y}_s-\mathbf{y}_t\geq 0
+  \end{equation*}
+  where the inequality follows from the definition of $\mathbf{y}_s$ in \eqref{eq:y-defn}. Furthermore, it is straightforward to see that $\mathbf{y}_s-\mathbf{y}_t$ satisfies the assumption in Lemma~\ref{lem:maximum-principle}, which then implies $\Phi_s^{*}\geq \Phi_t^{*}$.
+
+\section{Proof~\ref{thm:slice-algorithmic-stability}}
+  Following the same argument as in the proof of \cite[Theorem 5]{Belkin2004}, we can assume without loss of generality that $S$, $S'$ differ by a new point $\left( v_m,\mu_m \right)\leftrightarrow \left( v_m',\mu_m' \right)$; the other case where only the multiplicities differ can be treated similarly. By our assumption \eqref{eq:quantile-boundedness}, the two averages differ by at most an amount of
+  \begin{equation*}
+    \left| \bar{y}_s-\bar{y}_s' \right|\leq \frac{2M_s}{m}.
+  \end{equation*}
+  For simplicity, introduce temporary notations
+  \begin{equation*}
+    A:=T_{\ell}+m\gamma L,\qquad B:=T_{\ell}'+m\gamma L.
+  \end{equation*}
+  Using the simple fact that the $2$-norm dominate the $\infty$-norm, we have
+  \begin{equation*}
+    \begin{aligned}
+      &\left\| \Phi_s^{*} -\Phi_s'^{*} \right\|_{\infty} \leq \left\| \Phi_s^{*} -\Phi_s'^{*} \right\|_2\\
+      &\leq \frac{2M_s}{m}+\left\| A^{-1}\left(\mathbf{y}_s-\bar{y}_sT_\ell\mathbf{1}\right)-B^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right) \right\|_2\\
+      &\leq \frac{2M_s}{m}+\left\| A^{-1}\left(\mathbf{y}_s-\bar{y}_sT_\ell\mathbf{1}\right)-A^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right) \right\|_2\\
+      &\qquad+\left\| A^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right)-B^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right) \right\|_2.
+    \end{aligned}
+  \end{equation*}
+  Stanard functional analysis argument (the same perturbation reasoning we gave in \eqref{eq:standard-functional-analysis}) tells us that $\left\| A^{-1} \right\|_2\leq \left( m\gamma\lambda_1-T \right)^{-1}$. Together with the observation that
+    \begin{align*}
+      &\left\| \left(\mathbf{y}_s-\bar{y}_sT_\ell\mathbf{1}\right) - \left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right) \right\|_2\\
+      &\leq \left\| \mathbf{y}_s-\mathbf{y}_s' \right\|_2+\left\| \bar{y}_sT_\ell\mathbf{1}-\bar{y}_s'T'_\ell\mathbf{1} \right\|_2\\
+      &\leq 2M_s+\frac{2M_s}{m}<4M_s
+    \end{align*}
+  we have
+  \begin{equation*}
+    \left\| A^{-1}\left(\mathbf{y}_s-\bar{y}_sT_\ell\mathbf{1}\right)-A^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right) \right\|_2\leq \frac{4M_s}{m\gamma\lambda_1-T}.
+  \end{equation*}
+  In the meanwhile, noting that we also have $\left\| B^{-1} \right\|_2\leq \left( m\gamma\lambda_1-T \right)^{-1}$, and $\left\| A-B \right\|_2=\left\| T_{\ell}'-T_{\ell} \right\|_2 \leq \sqrt{2}<3/2$, we conclude that
+  \begin{equation*}
+    \begin{aligned}
+      &\left\| A^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right)-B^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right) \right\|_2\\
+      &=\left\| B^{-1} \left( B-A \right) A^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right)\right\|_2\leq \frac{3M_s\sqrt{Tm}}{\left( m\gamma\lambda_1-T \right)^2}.
+    \end{aligned}
+  \end{equation*}
+  Putting everything together completes the proof.
+
+\section{Proof of Lemma~\ref{lem:apriori-estimates}}
+
+  By the equivalence between \eqref{eq:tikhonov} and \eqref{eq:tikhonov-one-dimensional}, it suffices to show the following fact: for each fixed $s\in \left[ 0,1 \right]$, if $\max \left\{ \left|F_{\mu_i}^{-1} \left( s \right)\right|,\,\,i=1,\cdots,m\right\}\leq \phi \left( s \right)$ then $\left\|\Phi_s^{*}\right\|_{\infty}\leq \phi \left( s \right)$, where $\Phi_s^{*}$ is defined in \eqref{eq:tikhonov-one-dimensional-subproblem-equiv}. But this follows straightforwardly from the maximum principle.
+
+\section{Proof of Proposition~\ref{prop:alg-stability-slp}}
+Let $\left( j,\theta_j \right)$ be a new sample drawn from the joint distribution $D$. Then $\theta_j\in\mathcal{M}_{\phi}^2$ with probability $1$. Let $S$, $S'$ be two training samples with values in $\mathcal{M}_{\phi}^2$ and differ by exactly one data point. By Theorem~\ref{thm:slice-algorithmic-stability} we have
+  \begin{equation}
+    \label{eq:sliced-bounds}
+    \begin{aligned}
+      &\left| \Phi_s^{*} \left( j \right) -\Phi_s'^{*} \left( j \right) \right| \\
+      &\leq \left[\frac{3\sqrt{Tm}}{\left( m\gamma\lambda_1-T \right)^2}+\frac{4}{m\gamma\lambda_1-T}+\frac{2}{m}\right]\phi \left( s \right).
+    \end{aligned}
+  \end{equation}
+%  By \eqref{eq:one-dimensional-wasserstein},
+By \eqref{Eq:One_D_Equivalence}, the difference between the squared Wasserstein losses satisfy
+  \begin{equation*}
+    \begin{aligned}
+      &\left| c \left( f_S, \left( j,\theta_j \right) \right) - c \left( f_{S'}, \left( j,\theta_j \right) \right) \right|\\
+      &=\left| W_2^2 \left( f_S \left( j \right),\theta_j \right) - W_2^2 \left( f_{S'} \left( j \right),\theta_j \right) \right|\\
+      &=\left| \int_0^1 \left| \Phi_s^{*} \left( j \right)-F_{\theta_j}^{-1}\left( s \right) \right|^2\mathrm{d}s - \int_0^1 \left| \Phi_s'^{*} \left( j \right)-F_{\theta_j}^{-1}\left( s \right) \right|^2\mathrm{d}s \right|\\
+      &\leq \int_0^1 \left| \left( \Phi_s^{*} \left( j \right)+\Phi_s'^{*} \left( j \right)-2F_{\theta_j}^{-1}\left( s \right) \right)\left( \Phi_s^{*} \left( j \right) -\Phi_s'^{*} \left( j \right) \right) \right| \mathrm{d}s\\
+      &\stackrel{\left( * \right)}{\leq} \left[\frac{3\sqrt{Tm}}{\left( m\gamma\lambda_1-T \right)^2}+\frac{4}{m\gamma\lambda_1-T}+\frac{2}{m}\right]\cdot \int_0^1 4\phi \left( s \right)\cdot \phi \left( s \right)\mathrm{d}s\\
+      &=4\left\| \phi \right\|_2^2\left[\frac{3\sqrt{Tm}}{\left( m\gamma\lambda_1-T \right)^2}+\frac{4}{m\gamma\lambda_1-T}+\frac{2}{m}\right]=\beta,
+    \end{aligned}
+  \end{equation*}
+  where at $\left( * \right)$ we used \eqref{eq:sliced-bounds} to bound the difference $\left| \Phi_s^{*} \left( j \right) -\Phi_s'^{*} \left( j \right) \right|$, and invoked Lemma~\ref{lem:apriori-estimates} to conclude that
+  \begin{equation*}
+    \Phi_s^{*}\left( j \right),\Phi_s'^{*}\left( j \right) \leq \phi \left( s \right)
+  \end{equation*}
+  and hence
+  \begin{equation*}
+    \left| \Phi_s^{*} \left( j \right)+\Phi_s'^{*} \left( j \right)-2F_{\theta_j}^{-1}\left( s \right) \right|\leq 4\phi \left( s \right).
+  \end{equation*}
+
+\section{Proof of Theorem~\ref{Thm:Gen_Error_Soft}}
+
+
+  Note that the cost function is uniformly bounded by $M=4 \left\| \phi \right\|_2^2$ in our setting. The rest follows from Proposition~\ref{prop:alg-stability-slp} and Theorem~\ref{thm:bousquet-elisseeff}.
+
+
+
+
+
+
+%\bibliography{bibliography}
+%  \bibliographystyle{aaai}	
+
+\end{document}
