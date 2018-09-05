@@ -210,7 +210,7 @@ $$F^{-1}_{\mathsf{b}}(s)=\frac{1}{m}\sum_{i=1}^mF_{\rho_i}^{-1}(s).$$
 Since the inverse cdf and the distribution are in one-to-one correspondence, this theorem in fact computes the barycenter of $\{\rho_i\}_{i=1}^m$. In light of Theorem~\ref{Thm:Barycenter_One}, one can simplify the barycenter of hyperedge $E$ that contains vertices, say, $\{1, 2, \dots, k\}$ as 
 \begin{eqnarray}
 \mathsf{bar}(E) &=& \frac{1}{k}\sum_{i=1}^kW^2_2(\mu_i, \mu_\mathsf{b})\nonumber\\
-&=&\frac{1}{k}\sum_{i=1}^k\int_{0}^1\left(F_{\mu_i}^{-1}(s)-F_\mathsf{b}^{-1}(s)\right)^2\text{d}s\nonumber\\
+%&=&\frac{1}{k}\sum_{i=1}^k\int_{0}^1\left(F_{\mu_i}^{-1}(s)-F_\mathsf{b}^{-1}(s)\right)^2\text{d}s\nonumber\\
 &=&\frac{1}{k}\int_{0}^{1}\sum_{i=1}^k\left(F_{\mu_i}^{-1}(s)-\frac{1}{k}\sum_{i=1}^kF_{\mu_i}^{-1}(s)\right)^2\text{d}s\nonumber\\
 &=&\frac{1}{k^2}\int_0^1\sum_{i=1}^k\sum_{j=i+1}^n\left(F_{\mu_i}^{-1}(s)-F_{\mu_j}^{-1}(s)\right)^2 \nonumber\\
 &=&\frac{1}{k^2}\sum_{i=1}^k\sum_{j=i+1}^kW_2^2(\mu_i, \mu_j)\label{Eq:One_D_Equivalence}
@@ -219,22 +219,22 @@ where the first and second equalities follow from Theorems~\ref{Thm:Wasserstein_
 equivalent to Wasserstein label propagation for graph given in  \eqref{eq:tikhonov}. This then motivates us to concentrate on the latter as the label propagation for both graph and hypergraph.
 
 \section{Generalization Bounds for Wasserstein Label propagation}
-In this section, we focus on label propagation \eqref{eq:tikhonov} (for both graph and hypergraph) and derive generalization bounds. Before proceeding, we need to briefly define generalization error and algorithmic stability in the sequel.
-\subsection{Generalization error}
-In the \emph{Probably Approximately Correct} (PAC) framework, we assume the truth $\left\{ \left( i,\mu_i \right)\mid 1\leq i\leq n \right\}$ is sampled i.i.d.\ from a joint distribution $\theta\in \mathrm{Prob}\left( V\times \mathrm{Prob}\left( N \right) \right)$. We denote the \emph{empirical risk} or \emph{empirical error} by
-\begin{equation}
-  \label{eq:empirical-risk}
-  R_m \left( f \right)=\frac{1}{m}\sum_{i=1}^mW_2 \left( \mu_i, f_i \right)
-\end{equation}
-and the \emph{generalization error} by
-\begin{equation}
-  \label{eq:generalization-error}
-  R_{\theta} \left( f \right)=\mathbb{E}_{\theta} W_2 \left( f_i, \mu_i \right)
-\end{equation}
-where the expectation is taken over the joint distribution $\theta$.
-One subtlety in these theoretical assumption is whether one should allow the vertices $V=\left[ n \right]$ to be sampled with replacement. In fact, in order for the training samples to be i.i.d.\ drawn from a joint distribution on $V\times \mathrm{Prob}\left( N \right)$, it is inevitably to allow for multiplicity. Intuitively, one could expect that the probability of drawing repeated vertices in the graph should not be large if $m\ll n$, provided that the marginal distribution of $\theta$ on $G$ is "sufficiently close to uniform." Therefore, it should suffice if we impose an additional assumption for upper bounding the maximum multiplicity of the vertices sampled, since any generalization error bound we establish subsequently will be probabilistic anyways. {\color{blue} Keep this?}
+In this section, we focus on label propagation \eqref{eq:tikhonov} (for both graph and hypergraph) and derive generalization bounds. Before proceeding, we briefly review empirical risk, generalization error, and algorithmic stability in the passing.
+% \subsection{Generalization error}
+% In the \emph{Probably Approximately Correct} (PAC) framework, we assume the truth $\left\{ \left( i,\mu_i \right)\mid 1\leq i\leq n \right\}$ is sampled i.i.d.\ from a joint distribution $\theta\in \mathrm{Prob}\left( V\times \mathrm{Prob}\left( N \right) \right)$. We denote the \emph{empirical risk} or \emph{empirical error} by
+% \begin{equation}
+%   \label{eq:empirical-risk}
+%   R_m \left( f \right)=\frac{1}{m}\sum_{i=1}^mW_2 \left( \mu_i, f_i \right)
+% \end{equation}
+% and the \emph{generalization error} by
+% \begin{equation}
+%   \label{eq:generalization-error}
+%   R_{\theta} \left( f \right)=\mathbb{E}_{\theta} W_2 \left( f_i, \mu_i \right)
+% \end{equation}
+% where the expectation is taken over the joint distribution $\theta$.
+% One subtlety in these theoretical assumption is whether one should allow the vertices $V=\left[ n \right]$ to be sampled with replacement. In fact, in order for the training samples to be i.i.d.\ drawn from a joint distribution on $V\times \mathrm{Prob}\left( N \right)$, it is inevitably to allow for multiplicity. Intuitively, one could expect that the probability of drawing repeated vertices in the graph should not be large if $m\ll n$, provided that the marginal distribution of $\theta$ on $G$ is "sufficiently close to uniform." Therefore, it should suffice if we impose an additional assumption for upper bounding the maximum multiplicity of the vertices sampled, since any generalization error bound we establish subsequently will be probabilistic anyways. {\color{blue} Keep this?}
 
-To be able to talk about i.i.d.\ samples in a sensible way, we allow for multiplicities of graph vertices in the training sample $S=\left\{ \left( v_i,\mu_i \right)\mid 1\leq i\leq m,\,\,v_i\in V,\,\,\mu_i\in\mathrm{Prob}\left( N \right) \right\}$, where each $v_i\in V$ is an integer between $1$ and $n=\left| V \right|$. In principle it may well be possible that $m>n$, but we assume the number of distinct elements among $v_1,\cdots,v_m$ is strictly less than $n$. Denote the number of distinct elements among $v_1,\cdots,v_m$ by $\ell$, where $1\leq \ell<n$. While it still makes sense if $\ell=n$, in this case the learning problem could be better addressed as a denoising problem. For notational simplicity, we assume without loss of generality that the distinct vertices among $v_1,\cdots,v_m$ are the first $\ell$ vertices in the graph, and vertex $i\in V$ appears in $S$ with multiplicity $t_i\geq 1$.
+% To be able to talk about i.i.d.\ samples in a sensible way, we allow for multiplicities of graph vertices in the training sample $S=\left\{ \left( v_i,\mu_i \right)\mid 1\leq i\leq m,\,\,v_i\in V,\,\,\mu_i\in\mathrm{Prob}\left( N \right) \right\}$, where each $v_i\in V$ is an integer between $1$ and $n=\left| V \right|$. In principle it may well be possible that $m>n$, but we assume the number of distinct elements among $v_1,\cdots,v_m$ is strictly less than $n$. Denote the number of distinct elements among $v_1,\cdots,v_m$ by $\ell$, where $1\leq \ell<n$. While it still makes sense if $\ell=n$, in this case the learning problem could be better addressed as a denoising problem. For notational simplicity, we assume without loss of generality that the distinct vertices among $v_1,\cdots,v_m$ are the first $\ell$ vertices in the graph, and vertex $i\in V$ appears in $S$ with multiplicity $t_i\geq 1$.
 
 
 \subsection{Algorithmic Stability}  {\color{red}Merely copied}
@@ -292,14 +292,14 @@ Theorem~\ref{thm:bousquet-elisseeff} is clearly a very general algorithm that is
 In this subsection we would like to verify the algorithmic stability for the Tikhonov regularization framework \eqref{eq:tikhonov}. A first task is to find the appropriate model class for the distributions in $\mathrm{Prob}\left( N \right)$ that ensures the uniform boundedness of the cost function
 \begin{equation}
   \label{eq:wasserstein-cost-func}
-  \begin{aligned}
-    c:\left( \mathrm{Prob}\left( N \right)^G \right)\times \left( G\times \mathrm{Prob}\left( N \right) \right)&\rightarrow\mathbb{R}_{\geq 0}\\
-    \left( f, \left( j,\mu_j \right) \right)&\mapsto W_2^2 \left( f_j,\mu_j \right)
-  \end{aligned}
+    c\left( f, \left( j,\mu_j \right) \right)=W_2^2 \left( f_j,\mu_j \right)
 \end{equation}
 This can be fulfilled trivially, for instance, if the metric space $\left( N,d_N \right)$ is of bounded diameter. In fact, by the definition of the Wasserstein distances \eqref{eq:wasserstein-distance}, if $d_N \left( x,y \right)\leq \mathrm{diam}\left( N \right)<\infty$ for all $x,y\in N$, then for all $\mu,\nu\in \mathrm{Prob}\left( N \right)$
 \begin{equation*}
-  W_2^2 \left( \mu,\nu \right):=\inf_{\pi\in\Pi \left( \mu,\nu \right)}\iint_{N\times N}d^2_N \left( x,y \right)\,\mathrm{d}\pi \left( x,y \right)\leq \left[\mathrm{diam}\left( N \right)\right]^2.
+  \begin{aligned}
+      W_2^2 \left( \mu,\nu \right)&:=\inf_{\pi\in\Pi \left( \mu,\nu \right)}\iint_{N\times N}d^2_N \left( x,y \right)\,\mathrm{d}\pi \left( x,y \right)\\
+    &\leq \left[\mathrm{diam}\left( N \right)\right]^2.
+  \end{aligned}
 \end{equation*}
 This includes almost all generic applications we run into in practice, in particular for propagating histograms. The downside, of course, is the requirement for boundedness, which is already not satisfied by popular distribution classes such as the Gaussian distributions on Euclidean spaces. Solving this problem essentially amounts to specifying a model class for distributions with uniformly bounded pairwise Wasserstein distances; the question to ask here is thus what conditions can we impose on this model class to upper bound the Wasserstein distances when the domain metric space is unbounded. The infimum nature of \eqref{eq:wasserstein-distance} suggests that we can construct an arbitrary coupling and use it to generate an upper bound for the Wasserstein distances. Nevertheless, explicit construction of couplings is not easy in general.
 
@@ -376,7 +376,10 @@ This observation, together with the observation that the quadratic cost function
 from each $F_{\mu_i}^{-1}\left( s \right)$, applying the inverse of $T_\ell+m\gamma L$, and finally add $\bar{y}_s$ back to the obtained solution. More specifically, we would like to solve the equivalent optimization problem
 \begin{equation}
   \label{eq:tikhonov-one-dimensional-subproblem-equiv}
-  \Phi_s^*=\argmin_{\Phi_s\in\mathbb{R}^n}\frac{1}{m}\sum_{i=1}^m \left[\left( F_{\mu_i}^{-1}\left( s \right)-\bar{y}_s\right)-\left(\Phi_s \left( i \right)-\bar{y}_s \right)\right]^2+\gamma \left(\Phi_s-\bar{y}_s\mathbf{1}\right)^{\top}L\left(\Phi_s-\bar{y}_s\mathbf{1}\right)
+  \begin{aligned}
+    \Phi_s^*=\argmin_{\Phi_s\in\mathbb{R}^n}\frac{1}{m}&\sum_{i=1}^m \left[\left( F_{\mu_i}^{-1}\left( s \right)-\bar{y}_s\right)-\left(\Phi_s \left( i \right)-\bar{y}_s \right)\right]^2\\
+    &+\gamma \left(\Phi_s-\bar{y}_s\mathbf{1}\right)^{\top}L\left(\Phi_s-\bar{y}_s\mathbf{1}\right)
+  \end{aligned}
 \end{equation}
 which gives
 \begin{equation*}
@@ -409,13 +412,19 @@ Now that we have obtained closed-form solutions \eqref{eq:sol-tikhonov-one-dimen
   \end{align}
   where $\mathrm{deg}\left( i \right)\geq 1$ is the degree of vertex $i$ in graph $G$. First, we assert that the minimum of $\Phi$ must be attained among the vertices $1,\cdots,\ell$, for otherwise, if $\ell+1\leq i_*=\argmin_{i\in V}\Phi \left( i \right)\leq n$, then by \eqref{eq:maximum-principle-interior} we have
   \begin{equation*}
-    \mathrm{deg}\left(i_*\right)\Phi \left( i_* \right)=\sum_{j:j\sim i_*}\Phi \left( j \right)\geq \sum_{j:j\sim i_*}\Phi \left( i_* \right)=\mathrm{deg}\left(i_*\right)\Phi \left( i_* \right)
+    \begin{aligned}
+      \mathrm{deg}\left(i_*\right)\Phi \left( i_* \right)&=\sum_{j:j\sim i_*}\Phi \left( j \right)\\
+      &\geq \sum_{j:j\sim i_*}\Phi \left( i_* \right)=\mathrm{deg}\left(i_*\right)\Phi \left( i_* \right)
+    \end{aligned}
   \end{equation*}
 which implies $\Phi \left( j \right)=\Phi \left( i_* \right)$ for all vertices $j\sim i_*$. This argument can be repeated until the constant value propagates into the vertices within $1,\cdots,\ell$, and the assertion follows from the connectivity of the graph. The assertion for the maximum can be established analogously. Next we argue that the minimum of $\Phi$ on the vertices of $G$ must be non-negative. Assume the contracy, i.e. the minimum attained at $i_*\in \left[ 1,\ell \right]$ is strictly negative, then by \eqref{eq:maximum-principle-boundary} we have
-  \begin{equation*}
-    0\leq \left[\frac{t_{i_*}}{m\gamma}+\mathrm{deg}\left(i_{*}\right)\right]\Phi \left( i_{*} \right)-\sum_{j:j\sim i_{*}}\Phi \left( j \right)=\frac{t_{i_*}}{m\gamma}\Phi \left( i_* \right)+\sum_{j:j\sim i_*}\left[ \Phi \left( i_* \right)-\Phi \left( j \right) \right]<0
-  \end{equation*}
-  where the strict inequalty follows from the counter-assumption $\Phi \left( i_{*} \right)<0$. This contradiction completes our proof that $\Phi \geq 0$ on the entire graph $G$.
+\begin{equation*}
+  \begin{aligned}
+    0 &\leq \left[\frac{t_{i_*}}{m\gamma}+\mathrm{deg}\left(i_{*}\right)\right]\Phi \left( i_{*} \right)-\sum_{j:j\sim i_{*}}\Phi \left( j \right)\\
+    &=\frac{t_{i_*}}{m\gamma}\Phi \left( i_* \right)+\sum_{j:j\sim i_*}\left[ \Phi \left( i_* \right)-\Phi \left( j \right) \right]<0
+  \end{aligned}
+\end{equation*}
+ where the strict inequalty follows from the counter-assumption $\Phi \left( i_{*} \right)<0$. This contradiction completes our proof that $\Phi \geq 0$ on the entire graph $G$.
 \end{proof}
 
 \begin{proposition}
@@ -467,21 +476,28 @@ We can now rest assured that the solutions \eqref{eq:sol-tikhonov-one-dimensiona
   Using the simple fact that the $2$-norm dominate the $\infty$-norm, we have
   \begin{equation*}
     \begin{aligned}
-      \left\| \Phi_s^{*} -\Phi_s'^{*} \right\|_{\infty} &\leq \left\| \Phi_s^{*} -\Phi_s'^{*} \right\|_2\leq \left\| A^{-1}\left(\mathbf{y}_s-\bar{y}_sT_\ell\mathbf{1}\right)-B^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right) \right\|_2+\frac{2M_s}{m}\\
-      &\leq \left\| A^{-1}\left(\mathbf{y}_s-\bar{y}_sT_\ell\mathbf{1}\right)-A^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right) \right\|_2+\left\| A^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right)-B^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right) \right\|_2+\frac{2M_s}{m}.
+      &\left\| \Phi_s^{*} -\Phi_s'^{*} \right\|_{\infty} \leq \left\| \Phi_s^{*} -\Phi_s'^{*} \right\|_2\\
+      &\leq \frac{2M_s}{m}+\left\| A^{-1}\left(\mathbf{y}_s-\bar{y}_sT_\ell\mathbf{1}\right)-B^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right) \right\|_2\\
+      &\leq \frac{2M_s}{m}+\left\| A^{-1}\left(\mathbf{y}_s-\bar{y}_sT_\ell\mathbf{1}\right)-A^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right) \right\|_2\\
+      &\qquad+\left\| A^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right)-B^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right) \right\|_2.
     \end{aligned}
   \end{equation*}
   Stanard functional analysis argument (the same perturbation reasoning we gave in \eqref{eq:standard-functional-analysis}) tells us that $\left\| A^{-1} \right\|_2\leq \left( m\gamma\lambda_1-T \right)^{-1}$. Together with the observation that
-  \begin{equation*}
-    \left\| \left(\mathbf{y}_s-\bar{y}_sT_\ell\mathbf{1}\right) - \left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right) \right\|_2\leq \left\| \mathbf{y}_s-\mathbf{y}_s' \right\|_2+\left\| \bar{y}_sT_\ell\mathbf{1}-\bar{y}_s'T'_\ell\mathbf{1} \right\|_2\leq 2M_s+\frac{2M_s}{m}<4M_s
-  \end{equation*}
+    \begin{align*}
+      &\left\| \left(\mathbf{y}_s-\bar{y}_sT_\ell\mathbf{1}\right) - \left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right) \right\|_2\\
+      &\leq \left\| \mathbf{y}_s-\mathbf{y}_s' \right\|_2+\left\| \bar{y}_sT_\ell\mathbf{1}-\bar{y}_s'T'_\ell\mathbf{1} \right\|_2\\
+      &\leq 2M_s+\frac{2M_s}{m}<4M_s
+    \end{align*}
   we have
   \begin{equation*}
     \left\| A^{-1}\left(\mathbf{y}_s-\bar{y}_sT_\ell\mathbf{1}\right)-A^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right) \right\|_2\leq \frac{4M_s}{m\gamma\lambda_1-T}.
   \end{equation*}
   In the meanwhile, noting that we also have $\left\| B^{-1} \right\|_2\leq \left( m\gamma\lambda_1-T \right)^{-1}$, and $\left\| A-B \right\|_2=\left\| T_{\ell}'-T_{\ell} \right\|_2 \leq \sqrt{2}<3/2$, we conclude that
   \begin{equation*}
-    \left\| A^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right)-B^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right) \right\|_2=\left\| B^{-1} \left( B-A \right) A^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right)\right\|_2\leq \frac{3M_s\sqrt{Tm}}{\left( m\gamma\lambda_1-T \right)^2}.
+    \begin{aligned}
+      &\left\| A^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right)-B^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right) \right\|_2\\
+      &=\left\| B^{-1} \left( B-A \right) A^{-1}\left(\mathbf{y'}_s-\bar{y}_s'T'_\ell\mathbf{1}\right)\right\|_2\leq \frac{3M_s\sqrt{Tm}}{\left( m\gamma\lambda_1-T \right)^2}.
+    \end{aligned}
   \end{equation*}
   Putting everything together completes the proof.
 \end{proof}
@@ -513,13 +529,17 @@ The boundedness assumption on $\Phi_s$ seems artificial but is indeed very natur
   Let $\left( j,\theta_j \right)$ be a new sample drawn from the joint distribution $D$. Then $\theta_j\in\mathcal{M}_{\phi}^2$ with probability $1$. Let $S$, $S'$ be two training samples with values in $\mathcal{M}_{\phi}^2$ and differ by exactly one data point. By Theorem~\ref{thm:slice-algorithmic-stability} we have
   \begin{equation}
     \label{eq:sliced-bounds}
-    \left| \Phi_s^{*} \left( j \right) -\Phi_s'^{*} \left( j \right) \right| \leq \left[\frac{3\sqrt{Tm}}{\left( m\gamma\lambda_1-T \right)^2}+\frac{4}{m\gamma\lambda_1-T}+\frac{2}{m}\right]\phi \left( s \right).
+    \begin{aligned}
+      &\left| \Phi_s^{*} \left( j \right) -\Phi_s'^{*} \left( j \right) \right| \\
+      &\leq \left[\frac{3\sqrt{Tm}}{\left( m\gamma\lambda_1-T \right)^2}+\frac{4}{m\gamma\lambda_1-T}+\frac{2}{m}\right]\phi \left( s \right).
+    \end{aligned}
   \end{equation}
 %  By \eqref{eq:one-dimensional-wasserstein},
 By \eqref{Eq:One_D_Equivalence}, the difference between the squared Wasserstein losses satisfy
   \begin{equation*}
     \begin{aligned}
-      &\left| c \left( f_S, \left( j,\theta_j \right) \right) - c \left( f_{S'}, \left( j,\theta_j \right) \right) \right|=\left| W_2^2 \left( f_S \left( j \right),\theta_j \right) - W_2^2 \left( f_{S'} \left( j \right),\theta_j \right) \right|\\
+      &\left| c \left( f_S, \left( j,\theta_j \right) \right) - c \left( f_{S'}, \left( j,\theta_j \right) \right) \right|\\
+      &=\left| W_2^2 \left( f_S \left( j \right),\theta_j \right) - W_2^2 \left( f_{S'} \left( j \right),\theta_j \right) \right|\\
       &=\left| \int_0^1 \left| \Phi_s^{*} \left( j \right)-F_{\theta_j}^{-1}\left( s \right) \right|^2\mathrm{d}s - \int_0^1 \left| \Phi_s'^{*} \left( j \right)-F_{\theta_j}^{-1}\left( s \right) \right|^2\mathrm{d}s \right|\\
       &\leq \int_0^1 \left| \left( \Phi_s^{*} \left( j \right)+\Phi_s'^{*} \left( j \right)-2F_{\theta_j}^{-1}\left( s \right) \right)\left( \Phi_s^{*} \left( j \right) -\Phi_s'^{*} \left( j \right) \right) \right| \mathrm{d}s\\
       &\stackrel{\left( * \right)}{\leq} \left[\frac{3\sqrt{Tm}}{\left( m\gamma\lambda_1-T \right)^2}+\frac{4}{m\gamma\lambda_1-T}+\frac{2}{m}\right]\cdot \int_0^1 4\phi \left( s \right)\cdot \phi \left( s \right)\mathrm{d}s\\
