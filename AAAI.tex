@@ -31,18 +31,20 @@ Palo Alto, California 94303\\
 \maketitle
 
 \begin{abstract}
-Inspired by recent interests of developing machine learning and data mining algorithms on hypergraphs, we investigate in this paper the semi-supervised learning algorithm of propagating "soft labels" (e.g. probability distributions, class membership scores) over hypergraphs, by means of optimal transportation. Borrowing insights from Wasserstein propagation on graphs [Solomon et al. 2014], we re-formulate the label propagation procedure as message-passing algorithm, which renders itself naturally to a generalization applicable to hypergraphs through Wasserstein barycenters. Compared with Laplacian-based semi-supervised learning algorithms, the message-passing algorithm benefits from scalability and efficiency. Furthermore, in a PAC learning framework, we provide generalization error bounds for propagating one-dimensional distributions on graphs and hypergraphs using 2-Wasserstein distance, by establishing the \textit{algorithmic stability} of the proposed semi-supervised learning algorithm. These theoretical results also shed new lights upon deeper understandings of the Wasserstein propagation on graphs. 
+Inspired by recent interests of developing machine learning and data mining algorithms on hypergraphs, we investigate in this paper the semi-supervised learning algorithm of propagating "soft labels" (e.g. probability distributions, class membership scores) over hypergraphs, by means of optimal transportation. Borrowing insights from Wasserstein propagation on graphs [Solomon et al. 2014], we re-formulate the label propagation procedure as a message-passing algorithm, which renders itself naturally to a generalization applicable to hypergraphs through Wasserstein barycenters. 
+%Compared with Laplacian-based semi-supervised learning algorithms, the message-passing algorithm benefits from scalability and efficiency. 
+Furthermore, in a PAC learning framework, we provide generalization error bounds for propagating one-dimensional distributions on graphs and hypergraphs using 2-Wasserstein distance, by establishing the \textit{algorithmic stability} of the proposed semi-supervised learning algorithm. These theoretical results also shed new lights upon deeper understandings of the Wasserstein propagation on graphs. 
 %We validate the efficacy of the proposed algorithm through a number of synthetic and real data experiments.
 \end{abstract}
 	
 \section{Introduction}
-Recent decades have witnessed a growing interest in developing machine learning and data mining algorithms on \emph{hypergraphs} \cite{Hypergraph_Clustering,Hypergraph_Jost,Hypergraph_Game,Hypergraph_Kannan,Hypergraph_Olgica,Hypergraph_TV,HypergraphScalable}. As a natural generalization of graphs, a hypergraph is a combinatorial structure consists of vertices and hyperedges, where each hyperedge is allowed to connect any number of vertices. This additional flexibility facilitates capturing higher order interactions among objects; applications have been found in many fields such as computer vision \cite{Govindu2005}, network clustering \cite{Hyper_Spatial}, folksonomies \cite{GZCN2009}, cellular networks \cite{KHT2009}, and community detection \cite{KBG2018}.
+Recent decades have witnessed a growing interest in developing machine learning and data mining algorithms on \emph{hypergraphs} \cite{Hypergraph_Clustering,Hypergraph_Jost,Hypergraph_Game,Hypergraph_Kannan,Hypergraph_Olgica,Hypergraph_TV,HypergraphScalable}. As a natural generalization of graphs, a hypergraph is a combinatorial structure consisting of vertices and hyperedges, where each hyperedge is allowed to connect any number of vertices. This additional flexibility facilitates capturing higher order interactions among objects; applications have been found in many fields such as computer vision \cite{Govindu2005}, network clustering \cite{Hyper_Spatial}, folksonomies \cite{GZCN2009}, cellular networks \cite{KHT2009}, and community detection \cite{KBG2018}.
 
 This paper develops a probably approximately correct (PAC) learning framework for \emph{soft label propagation} or \emph{Wasserstein propagation} \cite{Solomon:2014}, a recently proposed semi-supervised learning algorithm based on optimal transport \cite{villani2003topics,villani2008optimal}, on graphs and hypergraphs. Different from the prototypical semi-supervised learning algorithm of \emph{label propagation} \cite{Belkin2004}, in which labels of interest are typically numerical or categorical variables, Wasserstein propagation aims at inferring unknown \emph{soft labels}, such as histograms or probability distributions, from known ones, based on pairwise similarities qualitatively characterized by edge connectivity and quantitatively measured using Wasserstein distances. Compared with traditional ``hard labels,'' soft labels are built with extra flexibility and informativeness, rendering themselves naturally to applications where uncertainty or distributional information is crucial. For instance, the traffic density at routers in the Internet network or topic distributions in the co-authorship network are more naturally modeled as probability distributions.
 
 Briefly speaking, semi-supervised learning is a paradigm that leverages unlabelled data to improve the generalization performance for supervised learning, under generic, unsupervised structural assumptions (e.g. the manifold assumption) on the dataset; see \cite{Seeger01learningwith,Zhu06SSL,CSZ2006} for an overview. Given a graph $G=\left( V,E \right)$ and a subset of vertices $V_0\subset V$, label propagation is the procedure of extending an assignment of labels on $V_0$, denoted as a map $f_0:V_0\rightarrow \D$ valued in an arbitrary set $\D$, to a map $f:V\rightarrow\D$ on the entire vertex set $V$. Borrowing an analogy with classical heat equations, this extension procedure is reminiscent of heat propagation from ``boundary'' $V_0$ to the ``entire domain'' $V$. For soft label propagation, the label set $\D$ is the probability distributions $\P \left( N \right)$ modeled on a complete separable metric space $\left( N,d_N \right)$. %(which can be finite or countably/uncountably infinite), and the labeling maps are thus measure-valued.
 
-Among the first works addressing semi-supervised learning with soft labels are \cite{Distribution_Propagation1,Distribution_Propagation2,SSL_Measure_Propagation}. In all these works, the similarity between two soft labels is quantitatively measured using the Kullback-Leibler (KL) divergence, which often suffers from instability and discontinuity for the inferred soft labels. In \cite{Solomon:2014} the authors proposed to replace the KL divergence with a $1$- or $2$-Wasserstein distance. The resulting soft label propagation algorithm is thus termed Wasserstein propagation. Specifically, given a measure-valued map $f_0:V_0\rightarrow\P \left( N \right)$ defined on $V_0\subset V$, Wasserstein propagation extends $f_0$ to $f:V\rightarrow \P \left( N \right)$ by solving the variational problem
+Among the first works addressing semi-supervised learning with soft labels are \cite{Distribution_Propagation1,Distribution_Propagation2,SSL_Measure_Propagation}. In all these works, the similarity between two soft labels is quantitatively measured using the Kullback-Leibler (KL) divergence, which often incurs instability and discontinuity in the inferred soft labels. In \cite{Solomon:2014} the authors proposed to replace the KL divergence with $1$- or $2$-Wasserstein distance. The resulting soft label propagation algorithm is thus termed ``Wasserstein propagation.'' Specifically, given a measure-valued map $f_0:V_0\rightarrow\P \left( N \right)$ defined on $V_0\subset V$, Wasserstein propagation extends $f_0$ to $f:V\rightarrow \P \left( N \right)$ by solving the variational problem
 \begin{equation}
   \label{eq:wasserstein-propagation}
   \min_{f:V\rightarrow\P \left( N \right)}\sum_{\left( v,w \right)\in E}W_p^p \left( f \left( v \right), f \left( w \right) \right)
@@ -54,13 +56,14 @@ subject to the constraint $f\restriction V_0=f_0$. Here $W_p \left( \mu,\nu \rig
 \end{equation}
 where $\Pi \left( \mu,\nu \right)$ is the set of all probabilistic couplings on $N\times N$ with $\mu$ and $\nu$ as marginals. When $p=2$, the minimizer of \eqref{eq:wasserstein-propagation} can be interpreted as a harmonic map, with boundary condition $f\restriction V_0=f_0$, that takes value in a weak, metric-measure space sense \cite{Otto2001,ambrosio2005gradient,LottVillani2009,Dirichlet_Wasserstein}. Note that this is a nontrivial fact because in general harmonic maps (or minimizers of the Dirichlet energy) only exist when the target metric space $\D$ is negatively curved in the sense of Alexandrov \cite{Jost}, but $\P \left( N \right)$ equipped with the $2$-Wasserstein distance has positive Alexandrov curvature \cite[\textsection 7.3]{ambrosio2005gradient}. When $\D$ is the one-dimensional distributions on the real line equipped with the $2$-Wasserstein distance, \cite{Solomon:2014} related \eqref{eq:wasserstein-propagation} to a Dirichlet problem.
 
-In this work, we first extend the framework of \cite{Solomon:2014} to hypergraphs using \textit{Wasserstein barycenter} \cite{Wasserstein_Barycenter,Hypergraph_Asoodeh}. For $2$-Wasserstein distances this is equivalent to solving a \emph{multi-marginal optimal transport} \cite{CE2010} problem with a naturally constructed cost function. The hypergraph extension of Wasserstein propagation is based on a novel interpretation of the original algorithm on graphs \cite{Solomon:2014} as a message-passing algorithm. Next, we take a deeper look at the statistical learning aspects of our proposed algorithm, and establish generalization error bounds for propagating one-dimensional distributions on graphs and hypergraphs using the $2$-Wasserstein distance. One dimensional distributions such as histograms are among the most widely used applications. The main technical ingredient is \textit{algorithmic stability} \cite{Algorithmic_Stability}. To our knowledge, our generalization bound is the first of this type in the literature of Wasserstein distance based soft label propagation; on graphs these results generalize the generalization error bounds in \cite{Belkin2004}. As there is no general semi-supervised learning algorithm available for large dataset \cite{Label_Propa_100}, the new connection between Wasserstein barycenters and semi-supervised learning might be of theoretical as well as computational interest.  Due to the space constraint, \textit{some of the proof of the results presented in this paper are delegated to the Supplemental Material.}
+In this work, we first extend the framework of \cite{Solomon:2014} to hypergraphs using \textit{Wasserstein barycenter} \cite{Wasserstein_Barycenter,Hypergraph_Asoodeh}. For $2$-Wasserstein distances this is equivalent to solving a \emph{multi-marginal optimal transport} \cite{CE2010} problem with a naturally constructed cost function. The hypergraph extension of Wasserstein propagation is based on a novel interpretation of the original algorithm on graphs \cite{Solomon:2014} as a message-passing algorithm. Next, we take a deeper look at the statistical learning aspects of our proposed algorithm, and establish generalization error bounds for propagating one-dimensional distributions on graphs and hypergraphs using the $2$-Wasserstein distance. One dimensional distributions such as histograms are among the most frequent application scenarios of soft label propagation. The main technical ingredient is \textit{algorithmic stability} \cite{Algorithmic_Stability}. To our knowledge, our generalization bound is the first of its type in the literature of Wasserstein distance based soft label propagation; on graphs these results generalize the generalization error bounds in \cite{Belkin2004}. As no general semi-supervised learning algorithm is available for large dataset \cite{Label_Propa_100}, the new connection between Wasserstein barycenter and semi-supervised learning might be of theoretical as well as computational interest. % Due to the space constraint, \textit{some proofs are delegated to the Supplemental Material.}
 
 %Our goal is to provide an efficient and theoretically sound approach to propagate probability measures $v\mapsto \mu_v$ on hypergraph $\H$ such that (i) $\mu_v$ coincide with the prescribed measures for $v\in V_0$ and (ii) all vertices within a hyperedge are assigned to "close" measures. To this goal, we reformulate Wasserstein label propagation \cite{Solomon:2014} as a message passing algorithm which renders  itself  naturally  to the hypergraph case via   We then provide generalization error bounds \cite{Generalization_semi} for propagating one-dimensional distributions on graphs and hypergraphs by establishing the 
 
 
-%\subsection{Notation}
-\noindent{\textbf{Notation.}} We denote an undirected simple graph $G$ as $G=(V, E)$ where $V=[n]\coloneqq\{1, \dots, n\}$ is the vertex set and $E\in V\times V$ denotes edges. We use $L$ to denote the (weighted) graph Laplacian associated with (weighted) graph $G$, which is a real square matrix of size $n$-by-$n$ defined by $L:=D-W$, where $W\in \mathbb{R}^{n\times n}$ is the (weighted) adjacency matrix of $G$, and $D\in \mathbb{R}^{n\times n}$ is a diagonal matrix with the (weighted) degree of vertex $j$ at its $\left( j,j \right)$-th entry. We use $H=(V, \mathcal E)$ to denote a hypergraph where $\mathcal E\in 2^V$ is the set of hyperedges of $H$. Given $k\geq 2$ probability measures $\rho_1, \dots, \rho_k$ in $\P(N)$, their \textit{Wasserstein barycenter} is %defined as %the minimizer of
+\subsection{Notation}
+%\noindent{\textbf{Notation.}} 
+We denote an undirected simple graph as $G=(V, E)$ where $V=[n]\coloneqq\{1, \dots, n\}$ is the vertex set and $E\in V\times V$ denotes edges. We use $L$ to denote the (weighted) graph Laplacian associated with (weighted) graph $G$, which is a real square matrix of size $n$-by-$n$ defined by $L:=D-W$, where $W\in \mathbb{R}^{n\times n}$ is the (weighted) adjacency matrix of $G$, and $D\in \mathbb{R}^{n\times n}$ is a diagonal matrix with the (weighted) degree of vertex $j$ at its $\left( j,j \right)$-th entry. We use $H=(V, \mathcal E)$ to denote a hypergraph where $\mathcal E\in 2^V$ is the set of hyperedges of $H$. Given $k\geq 2$ probability measures $\rho_1, \dots, \rho_k$ in $\P(N)$, their \textit{Wasserstein barycenter} is %defined as %the minimizer of
 \begin{equation}\label{Def:Barycenter}
     \mathsf{bar}\left(\{\rho_i\}_{i=1}^k\right)\coloneqq \inf_{\nu\in \P(N)}\frac{1}{k}\sum_{i=1}^nW_2^2(\rho_i, \nu).
 \end{equation} 
@@ -69,13 +72,13 @@ $E$ are clear from the context.
 
 
 \section{Message Passing and Label Propagation on Graph and Hypergraph}
-In this section, we formulate our hypergraph label propagation as a special case of belief propagation. To this goal, we first briefly describe an slightly generalized version of Wasserstein label propagation \cite{Solomon:2014} from a message passing perspective.
+In this section, we formulate our hypergraph label propagation as a special case of belief propagation. To this end, we begin with a brief description of a slightly generalized version of Wasserstein label propagation \cite{Solomon:2014} from a message passing perspective.
 
 
-A learning problem is specified by a probability distribution $D$ on $X\times Y$  according to which labeled sample pairs $z_i=\left( x_i,y_i \right)$ are drawn and presented to a learning algorithm. The soft label propagation problem amounts to setting $Y$ as a space of probability distributions and performs a regression problem for maps taking values in $Y$. Specifically, we let $Y$ be the simplex of probability distributions on a complete metric space $\left( N,d_N \right)$, i.e. $Y=\P\left( N \right)$. Since $N$ is complete, 
-$Y$, equipped with Wasserstein distance, is a complete metric space \cite[Theorem 6.18]{villani2003topics}.
-\subsection{Wasserstein Label Propagation for Graphs}
-Let $X$ be a graph $G= \left( V,E \right)$, possibly with weights $\omega_{ij}$ on each edge $\left(i,j\right)$. Wasserstein label propagation is an extension of Tikhonov regularization framework on graphs \cite{Belkin2004} from real-valued functions to measure-valued maps. 
+A learning problem is specified by a probability distribution $D$ on $X\times Y$  according to which labeled sample pairs $z_i=\left( x_i,y_i \right)$ are drawn and presented to a learning algorithm; the algorithm outputs a map from $X$ to $Y$. In soft label propagation problems, the maps of interest take values in a space of probability distributions $Y$. From now on, we assume $Y$ is the space of probability distributions on a complete metric space $\left( N,d_N \right)$, i.e. $Y=\P\left( N \right)$. Since $N$ is complete, the space $Y$ equipped with Wasserstein distance is also a complete metric space \cite[Theorem 6.18]{villani2003topics}.
+
+\subsection{Wasserstein Label Propagation on Graphs}
+Let $X$ be a graph $G= \left( V,E \right)$, possibly with weights $\omega_{ij}\geq 0$ on each edge $\left(i,j\right)$. Wasserstein label propagation is an extension of Tikhonov regularization framework on graphs \cite{Belkin2004} from real-valued functions to measure-valued maps. 
 Denote a measure-valued map from $G$ to $\P\left( N \right)$ as $\mu:V\rightarrow\P\left( N \right)$. For simplicity, write $\mu_i:=\mu \left( i \right)$ for $i\in V$. A prototypical semi-supervised learning setting assumes $\mu_1,\cdots,\mu_m$ are known, where $1\leq m \ll n$, and the goal is to determine $\mu_{m+1},\cdots,\mu_n$ on the rest of the vertices. We will do so by minimizing the following objective function with Tikhonov regularization
 \begin{equation}
   \label{eq:tikhonov}
@@ -107,7 +110,7 @@ The minimizer of \eqref{eq:tikhonov} is the measure-valued map ``learned'' from 
 We now provide an algorithm for solving \eqref{eq:tikhonov} based on belief propagation. Since this is only a motivating perspective, we assume for simplicity that the graph is unweighted; all arguments below can be extended to weighted graphs with heavier notations. In this context, each vertex $i$ updates its \textit{belief} about the local minimizer of \eqref{eq:tikhonov} $f_i$ by exchanging messages to edges it is incident to. The classical min-sum algorithm \cite{min_Sum} describes this process as follows. 
 %Representing the graph $G=(V, E)$ as a \textit{factor graph}, we can cast the soft label propagation described in last section as a message passing. Each $v\in V$ is a \textit{variable node} and each $e\in E$ is a \textit{factor node}.	
 %Denote the set of edges with direction distinguished by $\vec{E}=\{(i,j)\in V\times V:j\in N(i)\}$.
-At time $t$, vertex $i\in [m]$ has belief $b^{(t)}_i$ about the minimizer $f_i$ of \eqref{eq:tikhonov}; then, at time $t+1$, $i$ sends message $J^{(t)}_{i\to e}$ to edge $e=(i, j)$ and receives message $J^{(t)}_{e\to i}$ from $e$, updating the message for next iteration according to
+At time $t$, vertex $i\in [m]$ has belief $b^{(t)}_i$ about the minimizer $f_i$ of \eqref{eq:tikhonov}; then, at time $t+1$, $i$ sends message $J^{(t)}_{i\to e}$ to edge $e=(i, j)$ and receives message $J^{(t)}_{e\to i}$ from $e$, then updates the message for the next iteration according to
 % there are two messages on each edge $(i, e)\in E'$ in two different direction: $i\in V$ sends a message $J^{(t)}_{i\to e}:R\to R$ to $e=(i, j)\in E$ and receives a message $J^{(t)}_{e\to i}:R\to R$ from $e$:
 \begin{equation}\label{Eq:Update2}
 J^{(t)}_{i\to e} \left(b^{(t)}_i\right) = W_2^2\left(\mu_i, b^{(t)}_i\right) + \sum_{k\in N(i)\backslash \{j\}}J^{(t-1)}_{(i,k)\to i}\left(b^{(t-1)}_i\right)
@@ -137,10 +140,10 @@ Convergence of $b_i^{(t)}$ to the true minimizer $f^*_i$ can be guaranteed under
 
 %$$x_i^{(t)} = \argmin_{y_i}f_i(y_i) +\sum_{v\in N(i)}J^{(t)}_{v\to i}(y_i).$$ 
 
-\subsection{Wasserstein Label Propagation for Hypergraph}
+\subsection{Wasserstein Label Propagation on Hypergraphs}
 Let now $X$ be represented by a hypergraph $H=(V, \mathcal E)$. Since each hyperedge may contain arbitrary number of vertices, the minimization \eqref{eq:tikhonov} fails to formulate our learning objective. Nevertheless, the belief propagation updates \eqref{Eq:Update2} and \eqref{Eq:Update} can naturally be extended to the message passing between vertex $i$ and hyperedge $E$ containing $i$ as 
 \begin{equation}\label{Eq:Update_H_2}
-J^{(t)}_{i\to E} \left(b_i^{(t)}\right) = W_2^2\left(\mu_i, b_i^{(t)}\right) + \sum_{E'\in \mathcal E\backslash\{E\}: i\in E'}J^{(t-1)}_{E'\to i}\left(b_i^{(t-1)}\right)
+J^{(t)}_{i\to E} \left(b_i^{(t)}\right) =W_2^2\left(\mu_i, b_i^{(t)}\right) +\!\!\!\!\!\!\sum_{E'\in \mathcal E\backslash\{E\}:i\in E'}J^{(t-1)}_{E'\to i}\left(b_i^{(t-1)}\right)
 \end{equation}
 and 
 \begin{equation}\label{Eq:Update_H}
@@ -148,7 +151,6 @@ and
 \end{equation}
 where  $f_{E\backslash \{i\}}=\{f_k\in\P(N): k\in E\backslash\{i\}\}$.
 % We construct the factor graph $(V\cup \mathcal E, E')$ corresponding to $H$. Unlike the simple graph case, each factor node (i.e., hyperedge) $E$ has degree larger than 2. The messages over factor graph evolve as the following:
-
 % $$J^{(t)}_{i\to E} (x_i) = f_i(x_i) + \sum_{\hat E\in \mathcal E\backslash\{E\}: i\in \hat E}J^{(t-1)}_{\hat E\to i}(x_i)$$
 % and 
 % \begin{equation}\label{Eq:Update}
@@ -157,18 +159,14 @@ where  $f_{E\backslash \{i\}}=\{f_k\in\P(N): k\in E\backslash\{i\}\}$.
 % In above, we use $x_{E\backslash \{i\}}$ to denote the set of probability measures corresponding to vertices in $E$ expect for vertex $i$ whose probability measure is fixed $x_i$.
 The belief of vertex $i\in [m]$ is then obtained according to the following rule:
 $$b_i^{(t+1)}=\argmin_{f_i\in \P(N)}\left[W_2^2(\mu_i, f_i) + \sum_{E\in \mathcal{E}:i\in E}J^{(t)}_{E\to i}(f_i)\right].$$
-
-
-This belief propagation update rules justify the following formulation of label propagation for hypergraphs
+These belief propagation update rules justify the following formulation of label propagation for hypergraphs:
 \begin{equation}\label{eq:tikhonoc_Hyper}
     \min_{f:V\to \P(N)} \frac{1}{m}\sum_{i=1}^m W_2^2\left(\mu_i, f_i\right) + \gamma\sum_{E\in \mathcal E}\mathsf{bar}(E)
 \end{equation}
 which is a natural generalization of \eqref{eq:tikhonov} when the graph is unweighted. For weighted graphs, \eqref{eq:tikhonoc_Hyper} still holds with properly adjusted $\mathsf{bar}(E)$ with weights.
 
-\section{Propagating One-Dimensional Distributions with $2$-Wasserstein Distances}
-In this section, we assume that the labels are one-dimensional probability distributions, i.e., $N\subset \R$, and work solely with the $2$-Wasserstein distance. We will see that in this case hypergraph label propagation can be cast into a Wasserstein propagation on a weighted graph arising from the clique representation of the hypergraph. Therefore, in the rest of this paper it suffices to establish generalization error bounds for standard graphs.
-
-Given a hypergraph $H=(V, \mathcal E)$, we define its \textit{clique representation} as a graph $G_H=(V, E_H)$, where $E_H=\{(i, j):\exists E\in \mathcal E, \{i, j\}\subset E\}$. The main advantage of one-dimensional soft labels is illustrated by the following classical result in optimal transportation theory.
+\section{Barycenter and Clique Representation}
+In this section, we assume that the labels are one-dimensional probability distributions, i.e., $N\subset \R$, and work solely with the $2$-Wasserstein distance. We will see that in this case hypergraph label propagation can be cast into a Wasserstein propagation on a weighted graph arising from the clique representation of the hypergraph. The rest of this paper thus focuses on establishing generalization error bounds for graphs. The main advantage of one-dimensional soft labels is illustrated by the following classical result in optimal transportation theory.
 \begin{theorem}[\cite{villani2003topics}]\label{Thm:Wasserstein_One}
 Let $\mu, \nu\in \P(N)$ with $N\subset\R$ with cumulative density functions (c.d.f.) $F_\mu$ and $F_\nu$, respectively. Then $$W_2^2(\mu, \nu)=\int_{0}^1\left(F_\mu^{-1}(s)-F_\nu^{-1}(s)\right)^2\text{d}s,$$
 where $F_{\mu}^{-1}$ and $F_{\nu}^{-1}$ are the generalized inverses of $F_\mu$ and $F_\nu$, respectively, i.e., $F_\mu^{-1}(s)\coloneqq \inf\{x\in N:F_\mu(x)>s\}$. 
@@ -176,7 +174,7 @@ where $F_{\mu}^{-1}$ and $F_{\nu}^{-1}$ are the generalized inverses of $F_\mu$ 
 The explicit expression for Wasserstein distance enables us to derive the barycenter of any number of one-dimensional distributions in a closed form. 
 \begin{theorem}[\cite{bigot2017}]
 \label{Thm:Barycenter_One}
-Let $\rho_1, \dots, \rho_k\in \P(N)$ be $m$ probability distributions on $N\subset\R$ with cumulative density functions $F_{\rho_i}$, $i\in [k]$. Let $\rho_{\mathsf{b}}$ be the (unique) Wasserstein barycenter of $\{\rho_i\}_{i=1}^k$. Then the generalized inverse c.d.f.\ $F^{-1}_{\mathsf{b}}$ of $\rho_{\mathsf{b}}$ is given by 
+Let $\rho_1, \dots, \rho_k\in \P(N)$ be $m$ probability distributions on $N\subset\R$ with cumulative density functions $F_{\rho_i}$, $i\in [k]$. Let $\rho_{\mathsf{b}}$ be the (unique) Wasserstein barycenter of $\{\rho_i\}_{i=1}^k$. Then the generalized inverse c.d.f. $F^{-1}_{\mathsf{b}}$ of $\rho_{\mathsf{b}}$ is given by 
 $$F^{-1}_{\mathsf{b}}(s)=\frac{1}{k}\sum_{i=1}^kF_{\rho_i}^{-1}(s).$$
 \end{theorem}
 Since the inverse cdf's and the distributions are in one-to-one correspondence, this theorem characterizes the $2$-Wasserstein barycenter of $\{\rho_i\}_{i=1}^m$. In light of Theorem~\ref{Thm:Barycenter_One}, one can simplify the barycenter of hyperedge $E$ that contains vertices, say, $\{1, 2, \dots, k\}$ as
@@ -192,11 +190,14 @@ where the first and second equalities follow from Theorems~\ref{Thm:Wasserstein_
   \label{prop:clique-equivalence}
   Soft label propagation with $2$-Wasserstein distance for one-dimensional distributions on hypergraphs $H$ using \eqref{eq:tikhonoc_Hyper} is equivalent to Wasserstein propagation on a weighted graph arising from the clique representation $G_H$ of $H$. The weight of each edge $e$ in $G_H$ depends only on the degrees of the hyperedges containing $e$.
 \end{proposition}
+\begin{proof}
+Recall that the \textit{clique representation} of a hypergraph $H=(V, \mathcal E)$ is a graph $G_H=(V, E_H)$, where $E_H=\{(i, j):\exists E\in \mathcal E, \{i, j\}\subset E\}$. The rest of the proof follows from checking definitions.
+\end{proof}
 
 %It follows from \eqref{Eq:One_D_Equivalence} that in one-dimensional case the $2$-Wasserstein barycenter of each hyperedge of $H$ is given by the weighted average Wasserstein distance of the corresponding clique representation $G_H$. In particular,  %Consequently, label propagation for hypergraph formulated in \eqref{eq:tikhonoc_Hyper} is equivalent to Wasserstein label propagation for graph given in  \eqref{eq:tikhonov}. This then motivates us to concentrate on the latter as the label propagation for both graph and hypergraph.
 
-\section{Generalization Bounds for Wasserstein Label Propagation}
-In this section, we focus on label propagation \eqref{eq:tikhonov} (for both graph and hypergraph) and derive generalization bounds. Before proceeding, we briefly review empirical risk, generalization error, and algorithmic stability in the passing.
+\section{Generalization Bounds for Wasserstein Propagation}
+In this section we derive generalization bounds for label propagation \eqref{eq:tikhonov} on graphs. The same results apply to hypergraphs as well, by Proposition~\ref{prop:clique-equivalence}. We begin with briefly reviewing empirical risk, generalization error, and algorithmic stability in the passing.
 % \subsection{Generalization error}
 % In the \emph{Probably Approximately Correct} (PAC) framework, we assume the truth $\left\{ \left( i,\mu_i \right)\mid 1\leq i\leq n \right\}$ is sampled i.i.d.\ from a joint distribution $\theta\in \P\left( V\times \P\left( N \right) \right)$. We denote the \emph{empirical risk} or \emph{empirical error} by
 % \begin{equation}
@@ -215,16 +216,15 @@ In this section, we focus on label propagation \eqref{eq:tikhonov} (for both gra
 
 
 \subsection{Algorithmic Stability}  
-The framework of algorithmic stability \cite{DW1979,Algorithmic_Stability,MNPR2006} was proposed in statistical learning as an alternative to the VC-dimension framework; the latter is often over-pessimistic since it attempts to bound the generalization performance uniformly over all algorithm. We briefly recapture the essence of algorithmic stability here. Let $X$ and $Y$ be two measurable spaces, and a set of training samples $S=\left\{ z_1=\left( x_1,y_1 \right),\cdots,z_m= \left( x_m, y_m \right) \right\}$ of size $m$ sampled i.i.d. with respect to an unknown joint distribution $D$ on the product space $Z=X\times Y$. A learning algorithm is a mechanism that maps $S$ to a global map $f_S:X\rightarrow Y$ defined on the entire $X$. It is often assumed for simplicity that the algorithm is symmetric with respect to training sets, i.e., the learning algorithm should return identical maps for two training sets with samples differing from each other only by a permutation. We shall assume all maps considered here are measurable, and all the measure spaces are separable. In the scenario of main interest to us in this paper, $X$ is the simple finite graph and $Y$ is the probability space $\P\left( N \right)$. The \emph{empirical risk} or \emph{empirical error} of a mapping $f_S:X\rightarrow Y$ learned from the training set $S$ of size $m>0$ is defined as
+The framework of algorithmic stability \cite{DW1979,Algorithmic_Stability,MNPR2006} was proposed in statistical learning as an alternative to the VC-dimension framework; the latter is often over-pessimistic since it attempts to bound the generalization performance uniformly over possible algorithms. We briefly recapture the essence of algorithmic stability here. Let $X$ and $Y$ be two measurable spaces, and a set of training samples $S=\left\{ z_i=\left( x_i,y_i \right),i=1,\cdots,m \right\}$ of size $m$ sampled i.i.d. with respect to an unknown joint distribution $D$ on the product space $Z=X\times Y$. A learning algorithm is a mechanism that maps $S$ to a global map $f_S:X\rightarrow Y$ defined on the entire $X$. It is often assumed for simplicity that the algorithm is symmetric with respect to training sets, i.e., the learning algorithm should return identical maps for two training sets with samples differing from each other only by a permutation. We shall assume all maps considered here are measurable, and all the measure spaces are separable. We are interested in the case in which $X$ is a simple finite graph and $Y$ is the probability space $\P\left( N \right)$. The \emph{empirical risk} or \emph{empirical error} of a mapping $f_S:X\rightarrow Y$ learned from the training set $S$ of size $m>0$ is defined as
 \begin{equation*}
   R_m \left( f_S \right):=\frac{1}{m}\sum_{i=1}^mc \left( f_S, z_i \right)
 \end{equation*}
-where $c \left( \cdot,\cdot \right):Y^X\times \left( X\times Y \right)\rightarrow\mathbb{R}_{\geq0}$ is a cost function evaluating the predictive error of $f_S:X\rightarrow Y$ at a point sampled from the joint distribution $D$ on $X\times Y$. The \emph{generalization error} of the learned map $f_S:X\times Y$ is
+where $c \left( \cdot,\cdot \right):Y^X\times \left( X\times Y \right)\rightarrow\mathbb{R}_{\geq0}$ is a cost function evaluating the predictive error of $f_S:X\rightarrow Y$ at a point sampled from the joint distribution $D$ on $X\times Y$. The \emph{generalization error} of the learned map is
 \begin{equation*}
-  R_D \left( f_S \right)=\mathbb{E}_{z\sim D} \left[ c \left( f_S,z \right) \right].
+  R_D \left( f_S \right)=\mathbb{E}_{z\sim D} \left[ c \left( f_S,z \right) \right]
 \end{equation*}
-Intuitively, the generalization error measures the average prediction error for a map learned from  training data. The PAC learning framework is centered at bounding the discrepancy between $R_m$ and $R_D$. In \cite{Algorithmic_Stability}, the authors proved that such a bound can be obtained if the algorithm satisfies a \emph{uniform stability} property. 
-
+which measures the average prediction error for a map learned from training data. The central problem in the PAC learning framework is bounding the discrepancy between $R_m$ and $R_D$. In \cite{Algorithmic_Stability}, the authors proved that such a bound exists if the algorithm satisfies a \emph{uniform stability} property, essentially meaning that the learned mapping changes very little in terms of predictive power if the training sample undergoes a small change.
 \begin{definition}[Uniform Stability, \cite{Algorithmic_Stability}]
   \label{defn:uniform-stability}
   Fix a positive integer $m\in\mathbb{Z}_+$. Let $S=\left\{ z_1,\cdots,z_m \right\}\subset X\times Y$ be a training set, and $S'$ be another training set that contains the same elements as $S$ with the only exception that the sample $z_i$ is replaced with a different sample $z_i'\neq z_i$. A learning algorithm $A:\left( X\times Y \right)^m\rightarrow Y^X$ that sends any training set $S$ to a mapping $f_S:X\times Y$ is said to be (uniform) $\beta$-stable for some positive constant $\beta>0$ if for any pair of training sets $S$, $S'$ differing by exact one element the following inequality holds:
@@ -232,8 +232,6 @@ Intuitively, the generalization error measures the average prediction error for 
     \left| c \left( f_S,z \right)-c\left(f_{S'},z\right) \right|\leq \beta\qquad\forall z\in X\times Y.
   \end{equation*}
 \end{definition}
-Note that uniform stability is a very strong property: if the training sample undergoes a small change, the learned mapping will also change very little in terms of predictive power. Of course the order of $\beta$ in terms of the number $m$ of training samples will be crucial here, otherwise any learning algorithm is uniformly stable for any bounded cost function.
-
 \begin{theorem}[\cite{Algorithmic_Stability}]
   \label{thm:bousquet-elisseeff}
   Let $S\mapsto f_S$ be a $\beta$-stable learning algorithm, such that $0\leq c \left( f_S,z \right)\leq M$ for all $z\in X\times Y$ and all learning set $S$. For any arbitrary $\epsilon>0$ we have for all $m\geq 8M^2/\epsilon^2$
@@ -252,7 +250,7 @@ Note that uniform stability is a very strong property: if the training sample un
     \end{aligned}
   \end{equation}
 \end{theorem}
-As pointed out in \cite{Algorithmic_Stability}, in order for these bounds to be tight, a sufficient condition is that $\beta$ grows like $O \left( 1/m \right)$ as $m\rightarrow\infty$. It was verified in \cite{Algorithmic_Stability} that the Tikhonov regularization framework with quadratic cost function satisfies this requirement. Theorem~\ref{thm:bousquet-elisseeff} is very general---it is applicable to any measurable spaces $X$ and $Y$. The rest of this paper is devoted to establishing algorithmic stability for the (hyper)graph soft label propagation algorithms. %satisfies this framework, we should be able to conclude that generalization bounds \eqref{eq:fraction-bounds} and \eqref{eq:exponential-bounds} hold for the soft label propagation on graphs.
+Of course, the order of $\beta$ in terms of the number $m$ of training samples will be crucial here, otherwise any learning algorithm is uniformly stable for any bounded cost function. In \cite{Algorithmic_Stability} it was pointed out that a sufficient condition for these bounds to be tight is $\beta=O \left( 1/m \right)$ as $m\rightarrow\infty$. It was verified in \cite{Algorithmic_Stability} that the Tikhonov regularization framework for scalar-valued functions with quadratic cost function satisfies this requirement; but Theorem~\ref{thm:bousquet-elisseeff} is indeed much more general and applicable to any measurable spaces $X$ and $Y$. The rest of this paper is devoted to establishing algorithmic stability for(hyper)graph soft label propagation. %satisfies this framework, we should be able to conclude that generalization bounds \eqref{eq:fraction-bounds} and \eqref{eq:exponential-bounds} hold for the soft label propagation on graphs.
 
 \subsection{Generalization bounds for Soft Label Propagation} 
 The goal of this subsection is to verify that the conditions of Theorem~\ref{thm:bousquet-elisseeff} are satisfied for the Tikhonov regularization framework \eqref{eq:tikhonov}.
@@ -261,14 +259,14 @@ The first task is to find an appropriate model class for the distributions in $\
   \label{eq:wasserstein-cost-func}
     c\left( f, \left( j,\mu_j \right) \right)=W_2^2 \left( f_j,\mu_j \right).
 \end{equation}
-This can be fulfilled trivially, for instance, if the metric space $\left( N,d_N \right)$ is of bounded diameter: by the definition of the Wasserstein distances \eqref{eq:wasserstein-distance}, if $d_N \left( x,y \right)\leq \mathrm{diam}\left( N \right)<\infty$ for all $x,y\in N$, then we have $W_2^2 \left( \mu,\nu \right)\leq \left[\mathrm{diam}\left( N \right)\right]^2<\infty$ for all $\mu,\nu\in \P\left( N \right)$ .
+This can be fulfilled trivially, for instance, if the metric space $\left( N,d_N \right)$ is of bounded diameter.
 % \begin{equation*}
 %   \begin{aligned}
 %       W_2^2 \left( \mu,\nu \right)&:=\inf_{\pi\in\Pi \left( \mu,\nu \right)}\iint_{N\times N}d^2_N \left( x,y \right)\,\mathrm{d}\pi \left( x,y \right)\\
 %     &\leq \left[\mathrm{diam}\left( N \right)\right]^2.
 %   \end{aligned}
 % \end{equation*}
-This includes almost all generic applications we run into in practice, in particular for propagating histograms. The downside, of course, is the requirement for boundedness of $N$, which is already not satisfied by popular distribution classes such as the Gaussian distributions on Euclidean spaces. It is therefore preferable to work with a model class for distributions with uniformly bounded pairwise Wasserstein distances under milder assumptions. By definition \eqref{eq:wasserstein-distance}, bounding the Wassertein distance from above can be done by constructing an arbitrary coupling between the two marginals and plug it into the variational energy functional defining \eqref{eq:wasserstein-distance}. However, explicitly constructing meaningful couplings is difficult in general. Many existing bounds explore the multiscale structure of the supports of the two distributions \cite{David1988,Lei2018,SP2018}, but these technical conditions appear difficult to be used to specify model distribution classes. Here we bypass this difficulty by leveraging the simple characterization of Wasserstein distances between one-dimensional distributions using quantile functions.
+This includes many generic applications we run into in practice, in particular for propagating histograms but is already not satisfied by popular distribution classes such as the Gaussian distributions. It is therefore preferable to work with a model class for distributions with uniformly bounded pairwise Wasserstein distances under milder assumptions. By definition \eqref{eq:wasserstein-distance}, bounding the Wassertein distance from above can be achieved by plugging an arbitrary coupling into the variational energy functional defining \eqref{eq:wasserstein-distance}. However, explicitly constructing meaningful couplings is difficult in general. Many existing bounds explore the multiscale structure of the supports of the two distributions \cite{David1988,Lei2018,SP2018}, but it is not clear how those technical conditions can be used as model class specifications. We shall bypass this difficulty by leveraging the simple characterization of Wasserstein distances between one-dimensional distributions using quantile functions.
 
 According to Theorem~\ref{Thm:Wasserstein_One}, one can simplify \eqref{eq:tikhonov} as 
 \begin{equation*}
@@ -279,7 +277,7 @@ According to Theorem~\ref{Thm:Wasserstein_One}, one can simplify \eqref{eq:tikho
     &\qquad +\gamma \sum_{\left( i,j \right)\in E}\left( F_{f_i}^{-1}\left( s \right)-F_{f_j}^{-1}\left( s \right) \right)^2  \Big]\mathrm{d}s.
   \end{aligned}
   \end{equation*}
-Since the inverse c.d.f.'s and the distributions are in one-to-one correspondences and all $F_{\mu_i}^{-1}$ are given, it suffices to solve for the $F_{f_i}^{-1}$'s in their entirety and then recover each probability distribution at vertex $i$ from $F_{f_i}^{-1}:[0,1]\rightarrow\mathbb{R}$. To simplify notations, define $\Phi:V\times \left[ 0,1 \right]\rightarrow \mathbb{R}$ as $\Phi\left( i,s \right):=F_{f_i}^{-1}\left( s \right)$
+Since the inverse c.d.f.'s and the distributions are in one-to-one correspondences, and all $F_{\mu_i}^{-1}$ are given, it suffices to solve for the $F_{f_i}^{-1}$'s in their entirety and then recover each probability distribution at vertex $i$ from $F_{f_i}^{-1}:[0,1]\rightarrow\mathbb{R}$. To simplify notations, define $\Phi:V\times \left[ 0,1 \right]\rightarrow \mathbb{R}$ as $\Phi\left( i,s \right):=F_{f_i}^{-1}\left( s \right)$
 %\begin{equation*}
 %  \begin{aligned}
 %    \Phi:V\times \left[ 0,1 \right]&\rightarrow \mathbb{R}\\
@@ -291,27 +289,26 @@ and denote $\Phi_s \left( i \right):=\Phi \left( i,s \right)$ for all $s\in \lef
 %  \Phi_s \left( i \right):=\Phi \left( i,s \right)\qquad\forall i\in G.
 %\end{equation*}
 For each fixed $s\in\left[0,1\right]$, $\Phi_s$ can be viewed as a function defined on the vertices of the graph $G$. For simplicity, we will identify each $\Phi_s$ with a real column vector of length $n=\left| V \right|$. 
-Then the regularization term in \eqref{eq:tikhonov} can be written in terms of $L$, the graph Laplacian of $G$ (or weighted graph Laplacian if $G$ is a weighted graph), as
-\begin{equation*}
-  \gamma\int_0^1\Phi_s^{\top}L\Phi_s\mathrm{d}s,
-\end{equation*}
-and thus \eqref{eq:tikhonov} can be written as
+Then the regularization term in \eqref{eq:tikhonov} can be written in terms of $L$, the weighted graph Laplacian of $G$. Thus \eqref{eq:tikhonov} transforms into
+%\begin{equation*}
+%  \gamma\int_0^1\Phi_s^{\top}L\Phi_s\mathrm{d}s,
+%\end{equation*}
+%and thus \eqref{eq:tikhonov} can be written as
 \begin{equation}\label{eq:tikhonov-one-dimensional}
   \begin{aligned}
       &\min_{\Phi:V\times \left[ 0,1 \right]\rightarrow \mathbb{R}}\frac{1}{m}\sum_{i=1}^m\int_0^1 \left| F_{\mu_i}^{-1}\left( s \right)-\Phi_s \left( i \right) \right|^2\mathrm{d}s\\
       &\qquad \qquad\qquad \qquad +\gamma\int_0^1\Phi_s^{\top}L\Phi_s\,\mathrm{d}s.
   \end{aligned}
 \end{equation}
-The optimization problem \eqref{eq:tikhonov-one-dimensional} can be viewed as a linear combination of an infinite number of Tikhonov regularization problems, one for each $s\in \left[ 0,1 \right]$; each sub-problems is completely decoupled from others. Indeed, standard variational analysis shows that it suffices to solve each subproblem individually, i.e., solve for each fixed $s\in  \left[ 0,1 \right]$
+The optimization problem \eqref{eq:tikhonov-one-dimensional} can be viewed as a linear combination of infinitely many Tikhonov regularization problems, one for each $s\in \left[ 0,1 \right]$; each sub-problems is completely decoupled from others. Indeed, standard variational analysis shows that it suffices to solve each subproblem individually, i.e., solve for each fixed $s\in  \left[ 0,1 \right]$
 \begin{equation}
   \label{eq:tikhonov-one-dimensional-subproblem}
   \min_{\Phi_s\in\mathbb{R}^n}\frac{1}{m}\sum_{i=1}^m \left( F_{\mu_i}^{-1}\left( s \right)-\Phi_s \left( i \right) \right)^2+\gamma \Phi_s^{\top}L\Phi_s.
 \end{equation}
 %In fact, this subsumes Wasserstein label propagation, as \cite[Proposition 2]{Solomon:2014} is the special case\footnote{The case $\gamma\rightarrow0$ is considered in \cite{Belkin2004} as a parameter-free ``interpolated regularization.''} of this argument with $\gamma\rightarrow 0$.
-Once all subproblems are solved,  we need to ensure that the resulting solutions $\Phi_s$ for $s\in \left[ 0,1 \right]$ are compatible with each other so that the map $s\mapsto \Phi_s \left( i \right)$ for a fixed $i\in V$ is the inverse c.d.f.\ of a probability distribution. The required conditions will become straightforward after we derive the closed-form solution of each subproblem \eqref{eq:tikhonov-one-dimensional-subproblem}.
+Once all subproblems are solved, it is necessary to check the compatibility across the solutions $\left\{\Phi_s:s\in \left[ 0,1 \right]\right\}$, i.e., for any fixed $i\in V$, the map $s\mapsto \Phi_s \left( i \right)$ is indeed the inverse c.d.f. of a probability distribution. This compatibility will become straightforward after we derive the closed-form solution of each subproblem \eqref{eq:tikhonov-one-dimensional-subproblem}; see Proposition~\ref{Propo:Non_Decreasing} below.
 
-The solutions to Tikhonov regularization problems \eqref{eq:tikhonov-one-dimensional-subproblem} is indeed well-known. The authors in \cite{Belkin2004} derived the solutions for the graph case by simple linear algebra. 
-Let $\mathbf{1}=\left( 1,\cdots,1 \right)^{\top}\in\mathbb{R}^n$ be the column vector of all ones, and
+The solutions to Tikhonov regularization problems \eqref{eq:tikhonov-one-dimensional-subproblem} is known back in \cite{Belkin2004}. Let $\mathbf{1}=\left( 1,\cdots,1 \right)^{\top}\in\mathbb{R}^n$ be the column vector of all ones, and
 $$T_\ell=\mathrm{diag}\left( t_1,\cdots,t_{\ell},0,\cdots,0 \right)^{\top}\in\mathbb{R}^n$$
 where $t_i$ is the multiplicity of vertex $i\in V$ in the training set $S$ (we assumed without loss of generality that the training samples are the first $\ell$ vertices, for notational convenience), and
 \begin{equation}
@@ -321,28 +318,27 @@ where $t_i$ is the multiplicity of vertex $i\in V$ in the training set $S$ (we a
 i.e., for $1\leq i\leq \ell$, the $i$-th entry of $\mathbf{y}_s$ is the sum of the $t_i$ values of the inverse c.d.f.'s of $i\in V$. With these notations, it is easy to write down the Euler-Lagrange equation of the optimization problem \eqref{eq:tikhonov-one-dimensional-subproblem} as
 \begin{equation}
   \label{eq:tikhonov-one-dimensional-subproblem-euler-lagrange}
-  \left( T_{\ell}+m\gamma L \right)\Phi_s^{*}=\mathbf{y}_s
+  \left( T_{\ell}+m\gamma L \right)\Phi_s^{*}=\mathbf{y}_s.
 \end{equation}
-and one can na\"ively expect a solution to \eqref{eq:tikhonov-one-dimensional-subproblem} of the form $\left( T_{\ell}+m\gamma L \right)^{-1}\mathbf{y}_s$. However, the operator  $T_{\ell}+m\gamma L$ may not be invertible. Note that neither $T_{\ell}$ nor $L$ is invertible on its own right. Nonetheless, assuming the graph is connected, the nullspace of $L$ is one-dimensional and spanned precisely by the all-one vector $\mathbf{1}$. This means that $L$ will be invertible on the orthogonal complement of the one-dimensional subspace spanned by $\mathbf{1}$. Furthermore, noting that
+To solve this equation, note that the operator  $T_{\ell}+m\gamma L$ may not be invertible --- in fact, neither $T_{\ell}$ nor $L$ is invertible. Nonetheless, assuming the graph is connected, the nullspace of $L$ is one-dimensional and spanned precisely by the all-one vector $\mathbf{1}$. This means that $L$ will be invertible on the orthogonal complement of the one-dimensional subspace spanned by $\mathbf{1}$. Furthermore, noting that
 \begin{equation}
   \label{eq:standard-functional-analysis}
   T_{\ell}+m\gamma L=m\gamma \left( \frac{1}{m\gamma}T_{\ell}+L \right),
 \end{equation}
-by standard functional analysis (or \cite[Proof of Theorem 5]{Belkin2004}) we know that the perturbed operator $L+\left( m\gamma \right)^{-1}T_{\ell}$ will be invertible on the orthogonal complement as well, provided that $m\gamma$ is sufficiently large. In fact, the invertibility holds for
+by standard functional analysis (or \cite[Proof of Theorem 5]{Belkin2004}) we know that the perturbed operator $L+\left( m\gamma \right)^{-1}T_{\ell}$ is invertible on the orthogonal complement as well provided that $m\gamma$ is sufficiently large. More precisely, the invertibility holds for
 \begin{equation*}
 \gamma\geq \frac{\max \left\{ t_1,\cdots,t_{\ell} \right\}}{m\lambda_1}
 \end{equation*}
 % \begin{equation*}
 %   \frac{\max \left\{ t_1,\cdots,t_{\ell} \right\}}{m\gamma}<\lambda_1\quad\Leftrightarrow\quad \gamma\geq \frac{\max \left\{ t_1,\cdots,t_{\ell} \right\}}{m\lambda_1}
 % \end{equation*}
-where $\lambda_1$ is the smallest non-zero eigenvalue of $L$, or the \emph{spectral gap} of the (possibly weighted) connected graph $G$. This is consistent with the requirement in the theoretical analysis of \cite{Belkin2004} that the regularization parameter should not be too small.
-
+where $\lambda_1$ is the smallest non-zero eigenvalue of $L$, or the \emph{spectral gap} of the (possibly weighted) connected graph $G$. %This is consistent with the requirement in the theoretical analysis of \cite{Belkin2004} that the regularization parameter should not be too small.
 This observation, together with the invariance of the quadratic cost in \eqref{eq:tikhonov-one-dimensional-subproblem} under global translations, allow us to preprocess the input data by subtracting scalar
 \begin{equation}
   \label{eq:off-set-defn}
   \bar{y}_s := \frac{1}{m}\mathbf{1}^{\top}\mathbf{y}_s=\frac{1}{m}\sum_{i=1}^mF_{\mu_i}^{-1}\left( s \right)
 \end{equation}
-from each $F_{\mu_i}^{-1}\left( s \right)$, applying the inverse of $T_\ell+m\gamma L$, and finally add $\bar{y}_s$ back to the obtained solution. More specifically, we would like to solve the equivalent optimization problem
+from each $F_{\mu_i}^{-1}\left( s \right)$, applying the inverse of $T_\ell+m\gamma L$, and finally adding $\bar{y}_s$ back to the obtained solution. More specifically, we would like to solve the equivalent optimization problem
 \begin{equation}
   \label{eq:tikhonov-one-dimensional-subproblem-equiv}
   \begin{aligned}
@@ -374,7 +370,7 @@ Now that we have obtained closed-form solutions \eqref{eq:sol-tikhonov-one-dimen
   If $\Phi\in\mathbb{R}^n$ is such that $\left[\left( T_{\ell}+m\gamma L \right)\Phi\right] \left(i\right)\geq 0$ for all $1\leq i\leq \ell$ and $\left[\left( T_{\ell}+m\gamma L \right)\Phi\right] \left(i\right)=0$ for all $\ell+1\leq i\leq n$, then $\Phi$ attains both its maximum and minimum over $i=1,\cdots,n$ within $\left\{ 1,\cdots,\ell \right\}$. In particular, $\Phi\left(i\right)\geq 0$ for all $1\leq i\leq n$.
 \end{lemma}
 \begin{proof}
-  See supplementary materials.
+  See supplemental materials.
 \end{proof}
 % \begin{proof}
 %   The conditions on $\Phi$ can be written as
@@ -414,7 +410,7 @@ This lemma then implies the promised monotonicity.
   where the inequality follows from the definition of $\mathbf{y}_s$ in \eqref{eq:y-defn}. Furthermore, it is straightforward to see that $\mathbf{y}_s-\mathbf{y}_t$ satisfies the assumption in Lemma~\ref{lem:maximum-principle}, which then implies $\Phi_s^{*}\geq \Phi_t^{*}$.
 \end{proof}
 
-We can now rest assured that the solutions \eqref{eq:sol-tikhonov-one-dimensional-subproblem} indeed constitute an inverse c.d.f.\ at each vertex $i\in V$. But there is more to this: it can actually be easily verified that \eqref{eq:tikhonov-one-dimensional-subproblem-equiv} is equivalent to the Tikhonov regularization problem formulated in \cite{Belkin2004} if we view $\left(\Phi_s-\bar{y}_s\mathbf{1}\right)$ as variables. We can thus follow the idea of \cite[Theorem 5]{Belkin2004} to get algorithmic stability of each individual $\Phi_s$, $s\in \left[ 0,1 \right]$.
+We can now rest assured that the solutions \eqref{eq:sol-tikhonov-one-dimensional-subproblem} indeed constitute an inverse c.d.f. at each vertex $i\in V$. But there is more to this: it can actually be easily verified that \eqref{eq:tikhonov-one-dimensional-subproblem-equiv} is equivalent to the Tikhonov regularization problem formulated in \cite{Belkin2004} if we view $\left(\Phi_s-\bar{y}_s\mathbf{1}\right)$ as variables. We can thus follow the idea of \cite[Theorem 5]{Belkin2004} to get algorithmic stability of each individual $\Phi_s$, $s\in \left[ 0,1 \right]$.
 
 \begin{theorem}
   \label{thm:slice-algorithmic-stability}
@@ -437,7 +433,7 @@ We can now rest assured that the solutions \eqref{eq:sol-tikhonov-one-dimensiona
   \end{equation}
 \end{theorem}
 \begin{proof}
-  See supplementary materials.
+  See supplemental materials.
 \end{proof}
 
 % \begin{proof}
@@ -478,7 +474,7 @@ We can now rest assured that the solutions \eqref{eq:sol-tikhonov-one-dimensiona
 %   Putting everything together completes the proof.
 % \end{proof}
 
-The boundedness assumption on $\Phi_s$ seems artificial but is indeed very natural: an almost identical argument as the first part of the proof of Lemma~\ref{lem:maximum-principle}, with minimum replaced with maximum and \emph{mutatis mutandis}, establishes the fact that the global maximum of $\Phi_s$ must be attained at the boundary $1\leq i\leq \ell$.  Hence, since there are only finitely many data in the training set, this boundedness is a very mild requirement (e.g. satisfied if each $F_{\mu_i}^{-1} \left( s \right)$ is finite). We define the model class to reflect the requirement that the inverse c.d.f.\'s of the one-dimensional probability distributions in the training set should be controlled. We define the model class in Definition~\ref{defn:dqc} and summarize the maximum principle argument as a lemma on \emph{a priori} estimates for future convenience. 
+The boundedness assumption on $\Phi_s$ seems artificial but is indeed very natural: an almost identical argument as the first part of the proof of Lemma~\ref{lem:maximum-principle}, with minimum replaced with maximum and \emph{mutatis mutandis}, establishes the fact that the global maximum of $\Phi_s$ must be attained at the boundary $1\leq i\leq \ell$.  Hence, since there are only finitely many data in the training set, this boundedness is a very mild requirement (e.g. satisfied if each $F_{\mu_i}^{-1} \left( s \right)$ is finite). We define the model class to reflect the requirement that the inverse c.d.f.'s of the one-dimensional probability distributions in the training set should be controlled. We define the model class in Definition~\ref{defn:dqc} and summarize the maximum principle argument as a lemma on \emph{a priori} estimates for future convenience. 
 
 \begin{definition}[Dominated Quantile Class]
 \label{defn:dqc}
@@ -536,7 +532,7 @@ By \eqref{Eq:One_D_Equivalence}, the difference between the squared Wasserstein 
   \end{equation*}
 \end{proof}
 
-Note that the cost function is uniformly bounded by $M=4 \left\| \phi \right\|_2^2$ in our setting. Hence, combining  Proposition~\ref{prop:alg-stability-slp} and Theorem~\ref{thm:bousquet-elisseeff}, we can prove our main result.
+Note that the cost function is uniformly bounded by $M=4 \left\| \phi \right\|_2^2$ in our setting. Our main result this follows from combining  Proposition~\ref{prop:alg-stability-slp} and Theorem~\ref{thm:bousquet-elisseeff}.
 \begin{theorem}[Generalization Error for Soft Label Propagation for One-Dimensional Distributions]\label{Thm:Gen_Error_Soft}
   Under the same assumptions as Proposition~\ref{prop:alg-stability-slp}, for any $\epsilon>0$ we have for all $m\geq 8M^2/\epsilon^2$
   \begin{equation}
@@ -557,9 +553,9 @@ Note that the cost function is uniformly bounded by $M=4 \left\| \phi \right\|_2
 %  \end{equation*}
 \end{theorem}
 
-\begin{proof}
-Use Proposition~\ref{prop:alg-stability-slp} and Theorem~\ref{thm:bousquet-elisseeff}.
-\end{proof}
+%\begin{proof}
+%Use Proposition~\ref{prop:alg-stability-slp} and Theorem~\ref{thm:bousquet-elisseeff}.
+%\end{proof}
 
 % \begin{proof}
 %   Note that the cost function is uniformly bounded by $M=4 \left\| \phi \right\|_2^2$ in our setting. The rest follows from Proposition~\ref{prop:alg-stability-slp} and Theorem~\ref{thm:bousquet-elisseeff}.
@@ -591,7 +587,7 @@ Use Proposition~\ref{prop:alg-stability-slp} and Theorem~\ref{thm:bousquet-eliss
 % The WoS AI paper dataset comprise $1573$ authors and $12948$ papers in Artificial Intelligence published in year 2015. They hypergraph is formed with hyperedges being authors, vertices being papers, and incidency defined by authorship. We first do a topic modelling on the abstracts with $5$ topics, and use the clusters obtained from running spectral clustering on the topic distributions as ground truth. Then, for each topic, we pick $20$ papers with topic distribution the most concentrated on that topic as labeled data, and propagate the known topic distributions through the network. To show the performance of label propagation, we compare the clusters obtained with running spectral clustering on propagated distributions with those calculated directly from topic modelling.
 
 \section{Conclusion}
-In this paper, we proposed a novel framework for a semi-supervised learning problem where (i) the labels are given by probability measures on a metric space (aka soft labels) and (ii) the underlying similarity structure is given by a hypergraph (which subsumes graph and simplicial complex). Our framework was inspired by a re-formulation of graph-based label propagation in terms of message passing and borrowed ideas from the theory of multi-marginal optimal transport. We then established generalization error bounds for propagating one-dimensional distributions using $2$-Wasserstein distances. To the best of our knowledge, this constitutes the first generalization error bounds for Wasserstein distance based soft label propagation, even on graphs. We expect similar generalization bounds to hold for propagating higher-dimensional probability distributions as well as using other Wasserstein distances, but a deeper understanding of the geometry of Wasserstein spaces will be indispensable for those purposes.
+In this paper, we proposed a novel framework for a semi-supervised learning problem where (i) the labels are given by probability measures on a metric space (``soft labels'') and (ii) the underlying similarity structure is given by a hypergraph (which subsumes graph and simplicial complex). Our framework was inspired by a re-formulation of graph-based label propagation in terms of message passing and borrowed ideas from the theory of multi-marginal optimal transport. We then established generalization error bounds for propagating one-dimensional distributions using $2$-Wasserstein distances. To the best of our knowledge, this constitutes the first generalization error bounds for Wasserstein distance based soft label propagation, even on graphs. We expect similar generalization bounds to hold for propagating higher-dimensional probability distributions as well as using other Wasserstein distances, but a deeper understanding of the geometry of Wasserstein spaces will be indispensable for those purposes. Future work include (i) generalization of our results to higher-dimensional probability measures, (ii) investigating the scalability and efficiency of our message-passing algorithm, and (iii) experimental study of our framework on  real-work networks that can be naturally represented by hypergraphs.   
 	
 	
 \bibliography{bibliography}
